@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SKYWORTH Learning Rewards Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=photo-sky-restore" />
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  </head>
+  <body>
+    <div class="page-root">
+      <section id="introOverlay" class="intro-overlay" aria-label="Welcome intro">
+        <canvas id="introCanvas" class="intro-canvas" aria-hidden="true"></canvas>
+        <div class="intro-scanline" aria-hidden="true"></div>
+        <div class="intro-vignette" aria-hidden="true"></div>
+        <div class="intro-grid-bg" aria-hidden="true"></div>
+        <header class="intro-nav">
+          <div class="intro-brand">
+            <span class="intro-brand-text">SKYWORTH</span>
+            <span class="intro-brand-dot" aria-hidden="true"></span>
+          </div>
+          <nav class="intro-links" aria-label="Intro navigation">
+            <span>Learning</span>
+            <span>Sales Record</span>
+            <span>Lucky Draw</span>
+            <span>Point Shop</span>
+          </nav>
+
+        </header>
+        <div class="intro-content">
+          <h1>
+            <span class="intro-word">Welcome</span>
+            <span class="intro-word">to</span>
+            <span class="intro-word intro-word-accent">SKYWORTH</span>
+          </h1>
+          <p class="intro-tagline">
+            <span class="tagline-word">Intelligent</span>
+            <span class="tagline-word">Sales</span>
+            <span class="tagline-word">&amp;</span>
+            <span class="tagline-word">Training</span>
+            <span class="tagline-word">Platform</span>
+          </p>
+          <button class="intro-primary-button" type="button">
+            <span>Enter Platform</span>
+            <span class="btn-shimmer" aria-hidden="true"></span>
+          </button>
+        </div>
+        <p class="intro-footnote">Empower every sale with knowledge. Earn rewards as you grow.</p>
+      </section>
+
+      <section id="registrationGate" class="registration-gate">
+        <article class="registration-card">
+          <span class="eyebrow">Account Setup</span>
+          <h2>Register</h2>
+          <p>One profile for learning and rewards.</p>
+          <form id="registrationForm" class="form-stack">
+            <label>
+              <span>Full Name</span>
+              <input id="registerName" required placeholder="Enter your full name" />
+            </label>
+            <label>
+              <span>Province</span>
+              <select id="registerProvince" required>
+                <option value="">Select your province</option>
+              </select>
+            </label>
+            <label>
+              <span>Store</span>
+              <select id="registerStore" required disabled>
+                <option value="">Select province first</option>
+              </select>
+            </label>
+            <button id="registerButton" class="primary-btn" type="button">Start Learning</button>
+          </form>
+          <p id="registrationStatus" class="registration-status" aria-live="polite"></p>
+        </article>
+      </section>
+
+    <div id="appShell" class="app-shell is-locked" style="display: none;">
+      <!-- Unified top navigation bar -->
+      <header class="topbar-light" id="topbarLight">
+        <div class="topbar-inner">
+          <nav class="topbar-nav" aria-label="Main navigation">
+            <button class="topbar-nav-link is-active" data-view="learn" type="button">Learning</button>
+            <button class="topbar-nav-link" data-view="survey" type="button">Lucky Draw</button>
+            <button class="topbar-nav-link" data-view="mall" type="button">Rewards Mall</button>
+            <button class="topbar-nav-link" data-view="sales" type="button">Sales Records</button>
+            <button class="topbar-nav-link" data-view="admin" type="button">Admin</button>
+          </nav>
+          <div class="topbar-actions">
+            <button class="topbar-icon-btn" aria-label="Notifications" type="button">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </button>
+            <div class="topbar-avatar" aria-label="User menu">
+              <span id="topbarAvatarInitial">U</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+    <main>
+      <section id="learn" class="view is-active">
+        <!-- Top Building Banner -->
+        <div class="sales-banner">
+          <img src="./skyworth-hq-hero.jpg" alt="SKYWORTH Building" class="sales-banner-img" />
+          <div class="sales-banner-overlay"></div>
+          <div class="sales-banner-content">
+            <div class="sales-banner-title-row">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="sales-banner-icon">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/>
+              </svg>
+              <h1 class="sales-banner-title">Learning Center</h1>
+            </div>
+            <p class="sales-banner-subtitle">Explore courses and level up your product knowledge</p>
+          </div>
+        </div>
+        <!-- Profile Bar -->
+        <div class="sales-profile-bar">
+          <div class="sales-profile-left">
+            <div class="sales-profile-avatar" id="learnProfileInitial">U</div>
+            <div class="sales-profile-info">
+              <strong id="learnIdentityName">Not registered</strong>
+              <small id="learnIdentityMeta">Register to start learning</small>
+            </div>
+          </div>
+          <div class="sales-profile-right">
+            <button id="switchUserButton" class="learn-switch-btn" type="button" style="margin-top:2px;">Switch User</button>
+          </div>
+        </div>
+
+        <!-- Course Categories Section -->
+        <section class="learn-categories-section">
+          <div class="learn-section-header">
+            <h2 class="learn-section-title">Categories</h2>
+            <div class="learn-section-actions">
+              <select class="learn-filter-select" id="categoryFilter">
+                <option value="all">All Courses</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Scrollable course cards with arrows -->
+          <div class="learn-carousel-wrapper">
+            <button class="learn-carousel-arrow learn-carousel-left" id="carouselLeft" type="button" aria-label="Scroll left">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="learn-carousel-track" id="learnCarouselTrack">
+              <div id="specializationGrid" class="specialization-grid"></div>
+            </div>
+            <button class="learn-carousel-arrow learn-carousel-right" id="carouselRight" type="button" aria-label="Scroll right">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- Course Detail View (hidden by default) -->
+        <section id="specializationDetail" class="specialization-detail" hidden>
+          <div class="panel-title detail-title">
+            <div class="detail-head">
+              <button id="backToTracksButton" class="secondary-btn" type="button">Back to Courses</button>
+              <div>
+                <h3 id="specializationTitle">1. Knowing SKYWORTH</h3>
+                <p id="specializationDescription" class="detail-copy">Course directory and progress.</p>
+              </div>
+            </div>
+            <span id="specializationCount" class="status-pill">0 Items</span>
+          </div>
+          <div id="courseCatalogView" class="course-catalog-view">
+            <div id="courseCatalogList" class="course-catalog-list empty-state">No courses yet.</div>
+          </div>
+          <div id="courseContentView" class="course-content-view" hidden>
+            <div class="panel-title compact-title">
+              <h4 id="courseContentTitle">Learning Content</h4>
+              <button id="backToCatalogButton" class="secondary-btn" type="button">Back to Directory</button>
+            </div>
+            <div id="courseList" class="course-list"></div>
+          </div>
+        </section>
+
+        <!-- Continue Learning Section -->
+        <section class="learn-continue-section" id="learnContinueSection">
+          <h2 class="learn-section-title">Continue Learning</h2>
+          <div class="learn-continue-card" id="learnContinueCard">
+            <div class="learn-continue-thumb">
+              <img src="./skyworth-hq-hero.jpg" alt="QLED Technology" />
+            </div>
+            <div class="learn-continue-info">
+              <h3 class="learn-continue-course-title" id="continueCourseTitle">QLED Technology Deep Dive</h3>
+              <div class="learn-continue-progress">
+                <div class="learn-continue-progress-bar">
+                  <div class="learn-continue-progress-fill" id="continueProgressFill" style="width: 0%;"></div>
+                </div>
+                <span class="learn-continue-progress-text" id="continueProgressText">0%</span>
+              </div>
+            </div>
+            <button class="learn-continue-btn" id="continueBtn" type="button">
+              Continue
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </section>
+      </section>
+
+      <section id="mall" class="view">
+        <!-- Top Building Banner -->
+        <div class="sales-banner">
+          <img src="./skyworth-hq-hero.jpg" alt="SKYWORTH Building" class="sales-banner-img" />
+          <div class="sales-banner-overlay"></div>
+          <div class="sales-banner-content">
+            <div class="sales-banner-title-row">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="sales-banner-icon">
+                <circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/>
+              </svg>
+              <h1 class="sales-banner-title">Rewards Mall</h1>
+            </div>
+            <p class="sales-banner-subtitle">Redeem your points for amazing rewards</p>
+          </div>
+        </div>
+        <!-- Profile Bar -->
+        <div class="sales-profile-bar">
+          <div class="sales-profile-left">
+            <div class="sales-profile-avatar" id="mallProfileInitial">U</div>
+            <div class="sales-profile-info">
+              <strong id="mallIdentityName">Not registered</strong>
+              <small id="mallIdentityMeta">Register to redeem rewards</small>
+            </div>
+          </div>
+          <div class="sales-profile-right">
+            <span class="sales-profile-label">My Points</span>
+            <strong class="sales-profile-count" id="mallPointsDisplay">0</strong>
+          </div>
+        </div>
+        <!-- Product grid -->
+        <div id="mallGrid" class="mall-grid"></div>
+      </section>
+
+      <!-- ─── Lucky Draw ─── -->
+      <section id="survey" class="view">
+        <!-- Top Building Banner -->
+        <div class="sales-banner">
+          <img src="./skyworth-hq-hero.jpg" alt="SKYWORTH Building" class="sales-banner-img" />
+          <div class="sales-banner-overlay"></div>
+          <div class="sales-banner-content">
+            <div class="sales-banner-title-row">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="sales-banner-icon">
+                <circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/><path d="M12 2a15.3 15.3 0 0 0-4 10 15.3 15.3 0 0 0 4 10"/><path d="M2 12h20"/>
+              </svg>
+              <h1 class="sales-banner-title">Lucky Draw</h1>
+            </div>
+            <p class="sales-banner-subtitle">Record your TV sales to unlock today's lucky draw</p>
+          </div>
+        </div>
+        <!-- Profile Bar -->
+        <div class="sales-profile-bar">
+          <div class="sales-profile-left">
+            <div class="sales-profile-avatar" id="surveyProfileInitial">U</div>
+            <div class="sales-profile-info">
+              <strong id="surveyIdentityName">Not registered</strong>
+              <small id="surveyIdentityMeta">Register to submit</small>
+            </div>
+          </div>
+          <div class="sales-profile-right">
+            <span class="sales-profile-label">Draw Status</span>
+            <strong class="sales-profile-count" id="surveyDrawStatusText">Locked</strong>
+          </div>
+        </div>
+
+        <div class="survey-stack">
+          <!-- Form Panel (top) — Step 1/2/3 design -->
+          <section class="panel survey-form-panel">
+            <div class="panel-title">
+              <h2>Sales Record Submission</h2>
+              <span class="status-pill">Unlock Draw</span>
+            </div>
+
+            <form id="surveyForm" class="draw-submission-form">
+              <!-- Step 1 -->
+              <div class="draw-step">
+                <div class="draw-step-number">1</div>
+                <div class="draw-step-body">
+                  <label class="draw-step-label">Select TV Model</label>
+                  <div class="draw-model-grid">
+                    <label class="draw-model-option"><input type="radio" name="surveyModel" value="43E5520H/Q5600K" required /> 43E5520H/Q5600K</label>
+                    <label class="draw-model-option"><input type="radio" name="surveyModel" value="50E5520H" /> 50E5520H</label>
+                    <label class="draw-model-option"><input type="radio" name="surveyModel" value="55Q6600H/Q6700H" /> 55Q6600H/Q6700H</label>
+                    <label class="draw-model-option"><input type="radio" name="surveyModel" value="60Q6600H/Q6700H/Q6620H" /> 60Q6600H/Q6700H/Q6620H</label>
+                    <label class="draw-model-option"><input type="radio" name="surveyModel" value="65Q6600H" /> 65Q6600H</label>
+                    <label class="draw-model-option"><input type="radio" name="surveyModel" value="75Q6600H" /> 75Q6600H</label>
+                    <label class="draw-model-option"><input type="radio" name="surveyModel" value="85Q6600H" /> 85Q6600H</label>
+                    <label class="draw-model-option"><input type="radio" name="surveyModel" value="100Q7800H" /> 100Q7800H</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 2 -->
+              <div class="draw-step">
+                <div class="draw-step-number">2</div>
+                <div class="draw-step-body">
+                  <label class="draw-step-label">Upload Sales Receipt</label>
+                  <div class="draw-upload-area">
+                    <input id="surveyReceipt" type="file" accept="image/*,.pdf" class="draw-file-input" />
+                    <div class="draw-upload-placeholder">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      <span>Click to upload receipt image or PDF</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 3 -->
+              <div class="draw-step">
+                <div class="draw-step-number">3</div>
+                <div class="draw-step-body">
+                  <label class="draw-step-label">Submit</label>
+                  <button class="draw-submit-btn" type="submit">
+                    Submit Sales Record
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </section>
+
+          <!-- ─── Three-column Layout ─── -->
+          <div class="draw-three-col">
+            <!-- Left Card: Available Chances -->
+            <aside class="draw-side-card-new macaron-card">
+              <div class="draw-side-card-inner-new">
+                <div class="draw-card-header-area">
+                  <div class="macaron-card-icon macaron-icon-pink">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/><path d="M6 3h12v6a6 6 0 0 1-12 0V3z"/><path d="M9 21h6"/><path d="M12 15v6"/>
+                    </svg>
+                  </div>
+                  <span class="macaron-card-title">Available Chances</span>
+                </div>
+                <div class="draw-big-number-wrap">
+                  <div class="macaron-number-bg"></div>
+                  <span class="draw-big-number" id="drawChancesCount">0</span>
+                </div>
+                <span class="macaron-card-sub">Chances Left</span>
+                <button class="macaron-btn macaron-btn-pink" id="myHistoryBtn" type="button">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/><path d="M3 10h18"/></svg>
+                  My History
+                </button>
+              </div>
+            </aside>
+
+            <!-- Center: Festive 3D Wheel -->
+            <section class="draw-wheel-stage-new">
+              <div class="draw-wheel-container-new festive-wheel-container">
+                <!-- Outer ring (bulbs removed) -->
+                <div class="festive-outer-ring"></div>
+
+                <!-- Inner gold ring -->
+                <div class="festive-inner-ring"></div>
+
+                <!-- Wheel Segments -->
+                <div class="draw-wheel-segments festive-wheel-segments" id="wheelCanvas">
+                  <span class="draw-seg-label draw-seg-0">50,000<br>Points</span>
+                  <span class="draw-seg-label draw-seg-1">QLED TV</span>
+                  <span class="draw-seg-label draw-seg-2">Missed</span>
+                  <span class="draw-seg-label draw-seg-3">Hand Fan</span>
+                  <span class="draw-seg-label draw-seg-4">Electric<br>Toothbrush</span>
+                  <span class="draw-seg-label draw-seg-5">Electric<br>Shaver</span>
+                  <span class="draw-seg-label draw-seg-6">Bluetooth<br>Earbuds</span>
+                  <span class="draw-seg-label draw-seg-7">Green Bag</span>
+                  <span class="draw-seg-label draw-seg-8">20,000<br>Points</span>
+                </div>
+
+                <!-- Center Hub -->
+                <div class="draw-wheel-center-hub festive-hub">
+                  <div class="festive-hub-outer">
+                    <div class="festive-hub-inner">
+                      <span class="festive-hub-text">LOCKED</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SPIN Button -->
+                <button id="spinButton" class="draw-spin-btn-new festive-spin-btn" type="button" disabled>SPIN</button>
+
+                <!-- Top Pointer -->
+                <div class="draw-wheel-pointer-new festive-pointer">
+                  <svg width="48" height="52" viewBox="0 0 48 52">
+                    <defs>
+                      <linearGradient id="ptrGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#FF6B6B"/>
+                        <stop offset="100%" stop-color="#D63031"/>
+                      </linearGradient>
+                      <filter id="ptrShadow" x="-20%" y="-10%" width="140%" height="130%">
+                        <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#D63031" flood-opacity="0.35"/>
+                      </filter>
+                    </defs>
+                    <polygon points="24,50 4,10 44,10" fill="url(#ptrGrad)" filter="url(#ptrShadow)"/>
+                    <polygon points="24,46 8,12 40,12" fill="#FF8E8E" opacity="0.5"/>
+                    <ellipse cx="24" cy="10" rx="20" ry="3" fill="#FFB5B5" opacity="0.6"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Lock Hint -->
+              <div class="draw-wheel-hint-area festive-hint">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D63031" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span class="draw-wheel-hint-text festive-hint-text" id="drawWheelHint">Submit sales record to unlock.</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D63031" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+            </section>
+
+            <!-- Right Card: Weekly's Winners -->
+            <aside class="draw-side-card-new macaron-card">
+              <div class="draw-side-card-inner-new">
+                <div class="draw-card-header-area">
+                  <div class="macaron-card-icon macaron-icon-purple">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="9" r="7"/><path d="M9 16l-4 5h14l-4-5"/><path d="M12 2v3"/>
+                    </svg>
+                  </div>
+                  <span class="macaron-card-title">Weekly Winners</span>
+                </div>
+                <div class="draw-winners-list-area" id="drawWeeklyWinnersList">
+                  <div class="draw-winners-empty-new">
+                    <svg width="60" height="60" viewBox="0 0 60 60">
+                      <rect x="10" y="22" width="40" height="32" rx="6" fill="#EFF6FF" stroke="#60A5FA" stroke-width="1.5"/>
+                      <path d="M10 22 L30 12 L50 22" fill="none" stroke="#60A5FA" stroke-width="1.5"/>
+                      <path d="M30 12 L30 54" fill="none" stroke="#60A5FA" stroke-width="1.5"/>
+                      <path d="M20 12 Q20 6 30 12 Q40 6 40 12" fill="none" stroke="#60A5FA" stroke-width="1.5"/>
+                    </svg>
+                    <span class="draw-winners-empty-text">No winners this week yet</span>
+                  </div>
+                </div>
+                <button class="macaron-btn macaron-btn-purple" id="viewAllWinnersBtn" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="6" height="14" rx="1"/><rect x="9" y="10" width="6" height="10" rx="1"/><rect x="16" y="2" width="6" height="18" rx="1"/></svg>
+                  View All Winners
+                </button>
+              </div>
+            </aside>
+          </div>
+
+
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════
+           Sales Record — Premium SaaS Redesign
+           ═══════════════════════════════════════════════ -->
+      <section id="sales" class="view">
+        <!-- Top Building Banner -->
+        <div class="sales-banner">
+          <img src="./skyworth-hq-hero.jpg" alt="SKYWORTH Building" class="sales-banner-img" />
+          <div class="sales-banner-overlay"></div>
+          <div class="sales-banner-content">
+            <div class="sales-banner-title-row">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="sales-banner-icon">
+                <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18"/><path d="M9 21V9"/><line x1="7" y1="15" x2="11" y2="15"/><line x1="7" y1="18" x2="13" y2="18"/>
+              </svg>
+              <h1 class="sales-banner-title">Sales Record</h1>
+            </div>
+            <p class="sales-banner-subtitle">Auto-detect TV model and barcode from sales packaging label</p>
+          </div>
+        </div>
+
+        <!-- Profile Bar -->
+        <div class="sales-profile-bar">
+          <div class="sales-profile-left">
+            <div class="sales-profile-avatar" id="salesProfileInitial">U</div>
+            <div class="sales-profile-info">
+              <strong id="salesIdentityName">Not registered</strong>
+              <small id="salesIdentityMeta">Register to save records</small>
+            </div>
+          </div>
+          <div class="sales-profile-right">
+            <span class="sales-profile-label">Records This Week</span>
+            <strong class="sales-profile-count" id="salesWeeklyCount">0</strong>
+          </div>
+        </div>
+
+        <!-- Main Layout: Left Scan + Right Panels -->
+        <div class="sales-main-layout">
+          <!-- ── Left: Scan and Save Sales Data ── -->
+          <section class="sales-scan-panel">
+            <div class="sales-scan-header">
+              <div>
+                <h2 class="sales-scan-title">Scan and Save Sales Data</h2>
+                <p class="sales-scan-subtitle">Scan the barcode on TV packaging label to auto-extract model and serial number</p>
+              </div>
+              <span class="sales-tag sales-tag-auto">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Auto Extract
+              </span>
+            </div>
+
+            <form id="salesForm">
+              <!-- Step 1: Scan Barcode -->
+              <div class="sales-step">
+                <div class="sales-step-num">1</div>
+                <div class="sales-step-body">
+                  <div class="sales-step-label">Scan the Correct Barcode</div>
+                  <p class="sales-step-hint">Please scan the label shown below on the TV packaging box</p>
+                  <!-- Barcode Preview Box -->
+                  <div class="sales-barcode-preview">
+                    <div class="sales-barcode-preview-inner">
+                      <img src="./sales-reference-label.jpg" alt="TV barcode label reference" />
+                    </div>
+                    <div class="sales-barcode-scan-line"></div>
+                  </div>
+                  <!-- OR Divider -->
+                  <div class="sales-or-divider">
+                    <span class="sales-or-line"></span>
+                    <span class="sales-or-text">or</span>
+                    <span class="sales-or-line"></span>
+                  </div>
+                  <!-- Action Buttons -->
+                  <div class="sales-action-btns">
+                    <button id="uploadAlbumButton" class="sales-action-btn" type="button">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      Upload from Album
+                    </button>
+                    <button id="openCameraButton" class="sales-action-btn" type="button">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      Open Camera
+                    </button>
+                  </div>
+                  <input id="salesImage" type="file" accept="image/*" hidden />
+                  <input id="salesCameraImage" type="file" accept="image/*" capture="environment" hidden />
+                </div>
+              </div>
+
+              <!-- Step 2: Detected Result -->
+              <div class="sales-step">
+                <div class="sales-step-num">2</div>
+                <div class="sales-step-body">
+                  <div class="sales-step-label-row">
+                    <span class="sales-step-label">Detected Result</span>
+                    <span class="sales-tag sales-tag-readonly">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Read Only
+                    </span>
+                  </div>
+                  <div class="sales-detect-grid">
+                    <!-- Detected Model -->
+                    <div class="sales-detect-field">
+                      <span class="sales-detect-label">Detected Model</span>
+                      <div class="sales-detect-input-wrap">
+                        <input id="salesModel" class="sales-detect-input" placeholder="Waiting for detection..." readonly />
+                        <span class="sales-detect-spinner" id="salesModelSpinner"></span>
+                      </div>
+                    </div>
+                    <!-- Detected Barcode Number -->
+                    <div class="sales-detect-field">
+                      <span class="sales-detect-label">Detected Barcode Number</span>
+                      <div class="sales-detect-input-wrap">
+                        <input id="salesBarcode" class="sales-detect-input" placeholder="Waiting for detection..." readonly />
+                        <span class="sales-detect-spinner" id="salesBarcodeSpinner"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <button class="sales-submit-btn" type="submit">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Confirm and Save
+              </button>
+            </form>
+            <p id="salesScanStatus" class="sales-status-text" aria-live="polite"></p>
+            <p id="salesSaveStatus" class="sales-status-text" aria-live="polite"></p>
+          </section>
+
+          <!-- ── Right Column: Ranking + Records ── -->
+          <div class="sales-right-col">
+            <!-- Weekly Sales Ranking -->
+            <article class="sales-card">
+              <div class="sales-card-header">
+                <h3 class="sales-card-title">Weekly Sales Ranking</h3>
+                <span class="sales-tag sales-tag-light">Same Store</span>
+              </div>
+              <div id="salesRanking" class="sales-card-body">
+                <!-- Empty State -->
+                <div class="sales-empty-state">
+                  <!-- Decorative gift boxes -->
+                  <div class="sales-gift-deco sales-gift-deco-1">
+                    <svg width="44" height="48" viewBox="0 0 44 48"><rect x="2" y="12" width="40" height="34" rx="4" fill="#eff6ff" stroke="#93bce8" stroke-width="1.4"/><path d="M2 12 L22 0 L42 12" fill="none" stroke="#93bce8" stroke-width="1.4"/><line x1="22" y1="0" x2="22" y2="46" stroke="#93bce8" stroke-width="1.4"/><path d="M12 0 Q12 7 22 12 Q32 7 32 0" fill="none" stroke="#93bce8" stroke-width="1.4"/><rect x="12" y="20" width="20" height="16" rx="2" fill="none" stroke="#60a5fa" stroke-width="1"/><line x1="22" y1="20" x2="22" y2="36" stroke="#60a5fa" stroke-width="1"/><circle cx="22" cy="28" r="3" fill="#93c5fd" opacity="0.7"/></svg>
+                  </div>
+                  <div class="sales-gift-deco sales-gift-deco-2">
+                    <svg width="38" height="42" viewBox="0 0 38 42"><rect x="1" y="10" width="36" height="30" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.4"/><path d="M1 10 L19 0 L37 10" fill="none" stroke="#f59e0b" stroke-width="1.4"/><line x1="19" y1="0" x2="19" y2="40" stroke="#f59e0b" stroke-width="1.4"/><path d="M9 0 Q9 7 19 10 Q29 7 29 0" fill="none" stroke="#f59e0b" stroke-width="1.4"/><rect x="10" y="18" width="18" height="14" rx="2" fill="none" stroke="#fbbf24" stroke-width="1"/><line x1="19" y1="18" x2="19" y2="32" stroke="#fbbf24" stroke-width="1"/></svg>
+                  </div>
+                  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="sales-empty-icon">
+                    <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/><path d="M6 3h12v6a6 6 0 0 1-12 0V3z"/><path d="M9 21h6"/><path d="M12 15v6"/>
+                  </svg>
+                  <p class="sales-empty-title">No ranking data yet</p>
+                  <p class="sales-empty-desc">Ranking data will be shown here</p>
+                </div>
+              </div>
+            </article>
+
+            <!-- Recent Valid Records -->
+            <article class="sales-card">
+              <div class="sales-card-header">
+                <h3 class="sales-card-title">Recent Valid Records</h3>
+                <span class="sales-tag sales-tag-light">Latest Uploads</span>
+              </div>
+              <div id="salesRecentTable" class="sales-card-body">
+                <!-- Empty State -->
+                <div class="sales-empty-state">
+                  <!-- Decorative ribbons and gift -->
+                  <div class="sales-gift-deco sales-gift-deco-3">
+                    <svg width="48" height="52" viewBox="0 0 48 52"><rect x="3" y="14" width="42" height="36" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="1.4"/><path d="M3 14 L24 2 L45 14" fill="none" stroke="#86efac" stroke-width="1.4"/><line x1="24" y1="2" x2="24" y2="50" stroke="#86efac" stroke-width="1.4"/><path d="M13 2 Q13 9 24 14 Q35 9 35 2" fill="none" stroke="#86efac" stroke-width="1.4"/><rect x="14" y="24" width="20" height="18" rx="2" fill="none" stroke="#4ade80" stroke-width="1"/><line x1="24" y1="24" x2="24" y2="42" stroke="#4ade80" stroke-width="1"/></svg>
+                  </div>
+                  <div class="sales-ribbon-deco sales-ribbon-deco-1">
+                    <svg width="32" height="40" viewBox="0 0 32 40"><path d="M16 2 L7 10 L2 28 Q16 18 30 28 L25 10 Z" fill="#fce7f3" stroke="#f472b6" stroke-width="1.2"/><circle cx="16" cy="17" r="4" fill="#f9a8d4" opacity="0.8"/></svg>
+                  </div>
+                  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="sales-empty-icon">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                  <p class="sales-empty-title">No valid sales records yet</p>
+                  <p class="sales-empty-desc">Validated sales records will appear here</p>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="admin" class="view">
+        <div id="adminGate" class="admin-gate">
+          <div class="admin-gate-card">
+            <span class="eyebrow">Admin Access</span>
+            <h2>Admin Login</h2>
+            <p>Enter credentials to manage data.</p>
+            <form id="adminLoginForm" class="form-stack">
+              <label>
+                <span>Account</span>
+                <input id="adminAccount" required placeholder="Enter admin account" autocomplete="username" />
+              </label>
+              <label>
+                <span>Password</span>
+                <input id="adminPassword" type="password" required placeholder="Enter admin password" autocomplete="current-password" />
+              </label>
+              <button id="adminLoginButton" class="primary-btn" type="submit">Login</button>
+            </form>
+            <p id="adminLoginStatus" class="registration-status" aria-live="polite"></p>
+          </div>
+        </div>
+        <div id="adminContent" style="display:none;">
+        <!-- Top Building Banner -->
+        <div class="sales-banner">
+          <img src="./skyworth-hq-hero.jpg" alt="SKYWORTH Building" class="sales-banner-img" />
+          <div class="sales-banner-overlay"></div>
+          <div class="sales-banner-content">
+            <div class="sales-banner-title-row">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="sales-banner-icon">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/>
+              </svg>
+              <h1 class="sales-banner-title">Admin Panel</h1>
+            </div>
+            <p class="sales-banner-subtitle">Manage learning content, sales data, and draw results</p>
+          </div>
+        </div>
+        <!-- Profile Bar -->
+        <div class="sales-profile-bar">
+          <div class="sales-profile-left">
+            <div class="sales-profile-avatar" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">A</div>
+            <div class="sales-profile-info">
+              <strong>Administrator</strong>
+              <small>Full access to all data</small>
+            </div>
+          </div>
+          <div class="sales-profile-right">
+            <span class="sales-profile-label">System Status</span>
+            <strong class="sales-profile-count" style="color:#16a34a;font-size:18px;">Active</strong>
+          </div>
+        </div>
+          <div class="admin-actions">
+            <button id="exportButton" class="secondary-btn">Export CSV</button>
+            <button id="backupButton" class="secondary-btn" type="button">Backup Data</button>
+            <button id="restoreButton" class="secondary-btn" type="button">Restore Data</button>
+            <input id="restoreInput" type="file" accept="application/json,.json" hidden />
+            <button id="clearButton" class="danger-btn">Clear Data</button>
+          </div>
+        <div class="stats-grid">
+          <article class="stat"><span>Users</span><strong id="statUsers">0</strong></article>
+          <article class="stat"><span>Courses</span><strong id="statCourses">0</strong></article>
+          <article class="stat"><span>Quiz Attempts</span><strong id="statAttempts">0</strong></article>
+          <article class="stat"><span>Draw Entries</span><strong id="statSurveys">0</strong></article>
+          <article class="stat"><span>Sales Records</span><strong id="statSalesRecords">0</strong></article>
+          <article class="stat"><span>Gifts Won</span><strong id="statWins">0</strong></article>
+        </div>
+        <section class="panel upload-panel admin-upload-panel">
+          <div class="panel-title">
+            <h3 id="courseEditorTitle">Upload Learning Content</h3>
+            <span class="status-pill">Admin Only</span>
+          </div>
+          <p class="admin-upload-copy">Upload content and questions.</p>
+          <form id="courseForm" class="form-stack">
+            <input id="editingCourseId" type="hidden" />
+            <label>
+              <span>Specialized Course</span>
+              <select id="courseSpecialization" required>
+                <option value="company">1. Knowing SKYWORTH</option>
+                <option value="tv-basics">2. TV Basics</option>
+                <option value="product-training">3. Product Training</option>
+                <option value="tv-operations">4. TV Operation Steps</option>
+                <option value="faq">5. Frequently Asked Questions</option>
+              </select>
+            </label>
+            <label>
+              <span>Course Title</span>
+              <input id="courseTitle" required placeholder="Example: Safety Training Lesson 1" />
+            </label>
+            <label>
+              <span>Learning Video</span>
+              <input id="courseVideo" type="file" accept="video/*" />
+            </label>
+            <label>
+              <span>Learning Material</span>
+              <input id="courseMaterial" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,image/*" />
+            </label>
+            <div class="question-builder-shell">
+              <div class="panel-title compact-title">
+                <h4>Question Builder</h4>
+                <button id="addQuestionButton" class="secondary-btn" type="button">Add Question</button>
+              </div>
+              <div id="questionBuilder" class="question-builder empty-question-builder">No questions yet.</div>
+            </div>
+            <div class="editor-actions">
+              <button id="saveCourseButton" class="primary-btn" type="submit">Save Course</button>
+              <button id="cancelEditButton" class="secondary-btn" type="button" hidden>Cancel Edit</button>
+            </div>
+          </form>
+          <p id="courseSaveStatus" class="course-save-status" aria-live="polite"></p>
+        </section>
+        <section class="panel">
+          <div class="panel-title">
+            <h3>Published Courses</h3>
+            <span class="status-pill">Manage Content</span>
+          </div>
+          <div id="courseManagerList" class="course-manager-list empty-state">No courses yet.</div>
+        </section>
+        <section class="panel upload-panel admin-upload-panel">
+          <div class="panel-title">
+            <h3 id="mallEditorTitle">Edit Points Mall Gifts</h3>
+            <span class="status-pill">Admin Only</span>
+          </div>
+          <p class="admin-upload-copy">Gift, photo, points.</p>
+          <form id="mallItemForm" class="form-stack">
+            <input id="editingMallItemId" type="hidden" />
+            <label>
+              <span>Gift Name</span>
+              <input id="mallItemName" required placeholder="Example: SKYWORTH Gift Bag" />
+            </label>
+            <label>
+              <span>Gift Photo</span>
+              <input id="mallItemPhoto" type="file" accept="image/*" />
+            </label>
+            <label>
+              <span>Required Points</span>
+              <input id="mallItemCost" type="number" min="0" step="1" required placeholder="Example: 120" />
+            </label>
+            <div class="editor-actions">
+              <button id="saveMallItemButton" class="primary-btn" type="submit">Save Gift</button>
+              <button id="cancelMallEditButton" class="secondary-btn" type="button" hidden>Cancel Edit</button>
+            </div>
+          </form>
+          <p id="mallItemSaveStatus" class="course-save-status" aria-live="polite"></p>
+        </section>
+        <section class="panel">
+          <div class="panel-title">
+            <h3>Points Mall Gifts</h3>
+            <span class="status-pill">Manage Gifts</span>
+          </div>
+          <div id="mallManagerList" class="course-manager-list empty-state">No gifts yet.</div>
+        </section>
+        <div class="data-grid">
+          <section class="panel">
+            <h3>Registered Users</h3>
+            <div id="userTable" class="table-wrap"></div>
+          </section>
+          <section class="panel">
+            <h3>Learner Progress</h3>
+            <div id="learningTable" class="table-wrap"></div>
+          </section>
+          <section class="panel">
+            <h3>Points Mall Redemptions</h3>
+            <div id="redemptionTable" class="table-wrap"></div>
+          </section>
+          <section class="panel">
+            <h3>Quiz Attempts</h3>
+            <div id="attemptTable" class="table-wrap"></div>
+          </section>
+          <section class="panel">
+            <h3>Scanned Sales Records</h3>
+            <div id="salesRecordTable" class="table-wrap"></div>
+          </section>
+          <section class="panel">
+            <h3>Sales Records and Draw Results</h3>
+            <div id="surveyTable" class="table-wrap"></div>
+          </section>
+        </div>
+        </div><!-- end adminContent -->
+      </section>
+    </main>
+
+    <template id="courseTemplate">
+      <article class="course-card">
+        <div class="course-media"></div>
+          <div class="course-body">
+            <div class="course-head">
+              <h3></h3>
+              <span class="material-link"></span>
+            </div>
+          <div class="course-progress">
+            <div>
+              <span>Video watched</span>
+              <strong class="video-progress-text">0%</strong>
+            </div>
+            <progress class="video-progress-bar" max="100" value="0"></progress>
+            <span class="points-earned"></span>
+          </div>
+          <div class="resource-meta">
+            <span class="resource-pill material-status">No file</span>
+            <span class="resource-pill test-status">No test</span>
+          </div>
+          <div class="question-stack"></div>
+          <div class="student-row">
+            <div class="student-name">
+              <span>Submitting as</span>
+              <strong></strong>
+            </div>
+            <button class="secondary-btn open-material" type="button">Open File</button>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <template id="audioQuestionTemplate">
+      <section class="question-render-card">
+        <div class="question-render-head">
+          <span class="status-pill">Audio Upload</span>
+          <strong class="question-order"></strong>
+        </div>
+        <p class="question"></p>
+        <div class="audio-answer-panel">
+          <button class="mic-button" type="button">Hold to Record</button>
+          <button class="secondary-btn undo-audio-button" type="button" disabled>Undo</button>
+        </div>
+        <p class="audio-hint">Hold to record. Release to save.</p>
+        <p class="answer-feedback"></p>
+      </section>
+    </template>
+
+    <noscript>
+      <div class="noscript-banner">
+        JavaScript is required.
+      </div>
+    </noscript>
+
+      <script>
+        if (new URLSearchParams(window.location.search).get("demo") === "draw") {
+          document.body.classList.remove("intro-playing");
+          const introOverlay = document.getElementById("introOverlay");
+          const registrationGate = document.getElementById("registrationGate");
+          const appShell = document.getElementById("appShell");
+          if (introOverlay) {
+            introOverlay.hidden = true;
+            introOverlay.style.display = "none";
+            introOverlay.classList.add("is-hidden");
+          }
+          if (registrationGate) {
+            registrationGate.hidden = true;
+            registrationGate.style.display = "none";
+          }
+          if (appShell) {
+            appShell.hidden = false;
+            appShell.style.display = "block";
+            appShell.classList.remove("is-locked");
+            appShell.classList.add("is-visible");
+          }
+          window.forceDemoDrawView = () => {
+            document.querySelectorAll(".topbar-nav-link").forEach((link) => {
+              link.classList.toggle("is-active", link.dataset.view === "survey");
+            });
+            document.querySelectorAll(".view").forEach((view) => {
+              view.classList.toggle("is-active", view.id === "survey");
+            });
+            // Trigger wheel render if app.js has loaded
+            if (typeof renderPrizeWheel === "function") renderPrizeWheel();
+            if (typeof updateWheelState === "function") updateWheelState();
+          };
+          window.forceDemoDrawView();
+        }
+      </script>
+      <script src="./app.js?v=photo-sky-restore"></script>
+      <script>
+        if (window.forceDemoDrawView) {
+          window.setTimeout(window.forceDemoDrawView, 250);
+          window.setTimeout(window.forceDemoDrawView, 1000);
+        }
+      </script>
+    </div>
+  </body>
+</html>

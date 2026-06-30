@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SKYWORTH Lucky Draw Wheel — Premium Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+/* ═══════════════════════════════════════════════════════
+   GLOBAL PAGE STYLES — Light luxury SaaS
+   ═══════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: radial-gradient(ellipse at 50% 30%, #f5f6f8 0%, #e8ebf0 60%, #dce0e6 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+  color: #334155;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.05;
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='140' height='140' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='40' y='40' width='60' height='40' rx='4' fill='none' stroke='%23334155' stroke-width='0.8'/%3E%3Crect x='48' y='28' width='44' height='10' rx='2' fill='none' stroke='%23334155' stroke-width='0.6'/%3E%3Cline x1='70' y1='38' x2='70' y2='28' stroke='%23334155' stroke-width='0.6'/%3E%3Ccircle cx='95' cy='45' r='12' fill='none' stroke='%23334155' stroke-width='0.6'/%3E%3Cpath d='M89 39 Q95 33 101 39' fill='none' stroke='%23334155' stroke-width='0.6'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse at 15% 15%, rgba(244,184,58,0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 85% 15%, rgba(60,103,194,0.04) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 85%, rgba(184,146,70,0.04) 0%, transparent 40%);
+}
+
+.main-container {
+  position: relative; z-index: 1;
+  max-width: 840px; margin: 0 auto;
+  padding: 40px 24px 60px;
+  display: flex; flex-direction: column; align-items: center;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LAYER 0: DRAGON WALKING STAGE
+   ═══════════════════════════════════════════════════════ */
+.dragon-stage {
+  position: relative;
+  width: 100%;
+  height: 130px;
+  overflow: hidden;
+  z-index: 0;
+  margin-bottom: -24px;
+}
+.dragon-char {
+  position: absolute;
+  bottom: 0;
+  width: 110px;
+  height: 120px;
+  z-index: 1;
+  will-change: left;
+}
+.dragon-char.flip .dragon-svg-wrap { transform: scaleX(-1); }
+.dragon-svg-wrap {
+  width: 100%; height: 100%;
+  animation: dragonBob 0.42s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+}
+@keyframes dragonBob {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}
+
+.dragon-char.hit .dragon-svg-wrap {
+  animation: dragonHitBounce 0.5s ease-out;
+}
+@keyframes dragonHitBounce {
+  0%   { transform: translateY(0) scale(1); }
+  25%  { transform: translateY(-14px) scale(1.07); }
+  60%  { transform: translateY(-4px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Coin sparkle */
+.coin-sparkle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  animation: sparklePop 0.55s ease-out forwards;
+}
+@keyframes sparklePop {
+  0%   { transform: scale(0); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   WHEEL STAGE & CONTAINER
+   ═══════════════════════════════════════════════════════ */
+.wheel-stage {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+}
+.wheel-container {
+  position: relative;
+  width: 540px; height: 560px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Ambient light */
+.wheel-ambient {
+  position: absolute;
+  width: 520px; height: 520px; border-radius: 50%;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at 50% 28%, rgba(255,255,255,0.22) 0%, transparent 50%);
+  z-index: 0; pointer-events: none;
+}
+
+/* Bottom drop shadow */
+.wheel-shadow {
+  position: absolute;
+  width: 380px; height: 40px;
+  bottom: 40px; left: 50%; transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.1) 0%, transparent 70%);
+  z-index: 0; pointer-events: none;
+  filter: blur(8px);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PEDESTAL BASE
+   ═══════════════════════════════════════════════════════ */
+.wheel-pedestal {
+  position: absolute;
+  bottom: 22px; left: 50%; transform: translateX(-50%);
+  z-index: 1; pointer-events: none;
+  width: 330px; height: 52px; border-radius: 50%;
+  background: linear-gradient(180deg,
+    rgba(200,180,140,0.28) 0%,
+    rgba(180,155,110,0.2) 25%,
+    rgba(160,130,90,0.1) 55%,
+    transparent 100%);
+  box-shadow: 0 -6px 24px rgba(180,150,100,0.12);
+}
+.wheel-pedestal::after {
+  content: "";
+  position: absolute; bottom: -6px; left: 8%; width: 84%; height: 18px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.05), transparent 70%);
+}
+
+/* ═══════════════════════════════════════════════════════
+   STAR DUST RING
+   ═══════════════════════════════════════════════════════ */
+.star-dust-ring {
+  position: absolute;
+  width: 500px; height: 500px; border-radius: 50%;
+  z-index: 2; pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   OUTER DOUBLE METAL RING
+   ═══════════════════════════════════════════════════════ */
+.wheel-outer-ring {
+  position: absolute;
+  width: 452px; height: 452px; border-radius: 50%;
+  z-index: 3; pointer-events: none;
+  background: conic-gradient(
+    from 25deg,
+    #6b4f10 0deg, #8b6914 7deg, #b89246 13deg, #d4a850 20deg, #f0d78c 26deg,
+    #d4a850 32deg, #b89246 38deg, #8b6914 44deg, #6b4f10 50deg,
+    #8b6914 56deg, #b89246 63deg, #d4a850 70deg, #f0d78c 76deg,
+    #d4a850 82deg, #b89246 88deg, #8b6914 94deg, #6b4f10 100deg,
+    #8b6914 106deg, #b89246 113deg, #d4a850 120deg, #f0d78c 126deg,
+    #d4a850 132deg, #b89246 138deg, #8b6914 144deg, #6b4f10 150deg,
+    #8b6914 156deg, #b89246 163deg, #d4a850 170deg, #f0d78c 176deg,
+    #d4a850 182deg, #b89246 188deg, #8b6914 194deg, #6b4f10 200deg,
+    #8b6914 206deg, #b89246 213deg, #d4a850 220deg, #f0d78c 226deg,
+    #d4a850 232deg, #b89246 238deg, #8b6914 244deg, #6b4f10 250deg,
+    #8b6914 256deg, #b89246 263deg, #d4a850 270deg, #f0d78c 276deg,
+    #d4a850 282deg, #b89246 288deg, #8b6914 294deg, #6b4f10 300deg,
+    #8b6914 306deg, #b89246 313deg, #d4a850 320deg, #f0d78c 326deg,
+    #d4a850 332deg, #b89246 338deg, #8b6914 344deg, #6b4f10 350deg,
+    #8b6914 356deg, #b89246 360deg
+  );
+  box-shadow:
+    0 0 0 10px rgba(184,146,70,0.35),
+    0 0 0 19px rgba(160,120,50,0.16),
+    0 0 0 28px rgba(140,100,40,0.07),
+    0 26px 90px rgba(0,0,0,0.16),
+    inset 0 0 30px rgba(0,0,0,0.12);
+}
+
+/* Inner fine gold rim */
+.wheel-inner-ring {
+  position: absolute;
+  width: 418px; height: 418px; border-radius: 50%;
+  z-index: 4; pointer-events: none;
+  border: 2px solid rgba(232,213,163,0.5);
+  box-shadow: inset 0 0 18px rgba(212,168,80,0.15), 0 0 6px rgba(212,168,80,0.18);
+}
+
+/* Metal surface micro-texture */
+.wheel-metal-texture {
+  position: absolute;
+  width: 452px; height: 452px; border-radius: 50%;
+  z-index: 5; pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg, rgba(255,255,255,0.025) 0.25deg, transparent 0.5deg
+  );
+}
+
+/* High-light edge ring */
+.wheel-metal-edge {
+  position: absolute;
+  width: 452px; height: 452px; border-radius: 50%;
+  z-index: 6; pointer-events: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RIVETS
+   ═══════════════════════════════════════════════════════ */
+.wheel-rivet {
+  position: absolute; z-index: 7; pointer-events: none;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #f0d78c 0%, #d4a850 40%, #8b6914 100%);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 0 4px rgba(240,215,140,0.25);
+}
+.wheel-rivet::after {
+  content: "";
+  position: absolute; top: 2px; left: 2px;
+  width: 3px; height: 3px; border-radius: 50%;
+  background: rgba(255,255,255,0.45);
+}
+
+/* ═══════════════════════════════════════════════════════
+   WHEEL SEGMENTS — 10 sectors, conic-gradient
+   ═══════════════════════════════════════════════════════ */
+.wheel-segments {
+  position: absolute;
+  width: 406px; height: 406px; border-radius: 50%;
+  z-index: 8; overflow: hidden;
+  background: conic-gradient(
+    /* 0: 50,000 Points — warm bronze #b89246 */
+    #d4b86a 0deg, #b89246 18deg, #8b6914 36deg,
+    /* 1: QLED TV — matte wine red #9c3b3b */
+    #b85a5a 36deg, #9c3b3b 54deg, #6e2828 72deg,
+    /* 2: Missed — neutral gray #a3a8b0 */
+    #c0c4ca 72deg, #a3a8b0 90deg, #7e838a 108deg,
+    /* 3: Hand Fan — terracotta orange #d17838 */
+    #e09a5e 108deg, #d17838 126deg, #9e5624 144deg,
+    /* 4: Electric Toothbrush — sapphire #3c67c2 */
+    #5c88d8 144deg, #3c67c2 162deg, #28489a 180deg,
+    /* 5: Electric Shaver — morandi teal #489990 */
+    #64b0a8 180deg, #489990 198deg, #2e7068 216deg,
+    /* 6: Bluetooth Earbuds — lavender #7c58c2 */
+    #9c7cd6 216deg, #7c58c2 234deg, #543a90 252deg,
+    /* 7: Green Bag — sage green #589962 */
+    #76b87f 252deg, #589962 270deg, #3a7044 288deg,
+    /* 8: 20,000 Points — cyan-blue #46a1b8 */
+    #64b8cc 288deg, #46a1b8 306deg, #2e7a90 324deg,
+    /* 9: 50,000 Points — warm bronze #b89246 */
+    #d4b86a 324deg, #b89246 342deg, #8b6914 360deg
+  );
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.08);
+}
+
+/* Slot divider lines (cream white 1px) */
+.wheel-segments::after {
+  content: "";
+  position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(
+    transparent 0deg, transparent 35.5deg, rgba(255,250,240,0.55) 35.5deg, rgba(255,250,240,0.55) 36.5deg, transparent 36.5deg,
+    transparent 71.5deg, rgba(255,250,240,0.55) 71.5deg, rgba(255,250,240,0.55) 72.5deg, transparent 72.5deg,
+    transparent 107.5deg, rgba(255,250,240,0.55) 107.5deg, rgba(255,250,240,0.55) 108.5deg, transparent 108.5deg,
+    transparent 143.5deg, rgba(255,250,240,0.55) 143.5deg, rgba(255,250,240,0.55) 144.5deg, transparent 144.5deg,
+    transparent 179.5deg, rgba(255,250,240,0.55) 179.5deg, rgba(255,250,240,0.55) 180.5deg, transparent 180.5deg,
+    transparent 215.5deg, rgba(255,250,240,0.55) 215.5deg, rgba(255,250,240,0.55) 216.5deg, transparent 216.5deg,
+    transparent 251.5deg, rgba(255,250,240,0.55) 251.5deg, rgba(255,250,240,0.55) 252.5deg, transparent 252.5deg,
+    transparent 287.5deg, rgba(255,250,240,0.55) 287.5deg, rgba(255,250,240,0.55) 288.5deg, transparent 288.5deg,
+    transparent 323.5deg, rgba(255,250,240,0.55) 323.5deg, rgba(255,250,240,0.55) 324.5deg, transparent 324.5deg,
+    transparent 359.5deg, rgba(255,250,240,0.55) 359.5deg, rgba(255,250,240,0.55) 360.5deg, transparent 360.5deg
+  );
+  pointer-events: none; z-index: 9;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SEGMENT TEXT LABELS
+   ═══════════════════════════════════════════════════════ */
+.seg-label {
+  position: absolute;
+  width: 80px; text-align: center;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 13px; font-weight: 600; line-height: 1.2;
+  color: #FFFFFF;
+  text-shadow: 0 0 6px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.4);
+  pointer-events: none; z-index: 10;
+  word-wrap: break-word;
+}
+.seg-0 { left: 50%; top: 50%; transform: translate(32px, -132px); }
+.seg-1 { left: 50%; top: 50%; transform: translate(98px, -86px); }
+.seg-2 { left: 50%; top: 50%; transform: translate(122px, -8px); }
+.seg-3 { left: 50%; top: 50%; transform: translate(98px, 68px); }
+.seg-4 { left: 50%; top: 50%; transform: translate(32px, 116px); }
+.seg-5 { left: 50%; top: 50%; transform: translate(-48px, 116px); }
+.seg-6 { left: 50%; top: 50%; transform: translate(-114px, 68px); }
+.seg-7 { left: 50%; top: 50%; transform: translate(-138px, -8px); }
+.seg-8 { left: 50%; top: 50%; transform: translate(-114px, -86px); }
+.seg-9 { left: 50%; top: 50%; transform: translate(-48px, -132px); }
+
+/* ═══════════════════════════════════════════════════════
+   LOCKED CENTER HUB — 3-layer concentric
+   ═══════════════════════════════════════════════════════ */
+.wheel-center-hub {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 12;
+}
+.hub-outer {
+  width: 108px; height: 108px; border-radius: 50%;
+  background: conic-gradient(from 0deg, #c9a042, #e8d5a3, #b89246, #d4a850, #c9a042);
+  display: grid; place-items: center;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.16);
+}
+.hub-mid {
+  width: 90px; height: 90px; border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.05) 0%, transparent 4%),
+    radial-gradient(circle at 65% 55%, rgba(255,255,255,0.04) 0%, transparent 3%),
+    linear-gradient(135deg, #9ca3af 0%, #6b7280 40%, #4b5563 100%);
+  background-size: 10px 10px, 8px 8px, 100% 100%;
+  display: grid; place-items: center;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.35);
+}
+.hub-inner {
+  width: 66px; height: 66px; border-radius: 50%;
+  background: linear-gradient(135deg, #374151 0%, #1f2937 50%, #111827 100%);
+  display: grid; place-items: center;
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.55);
+}
+.hub-text {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 15px; font-weight: 800;
+  color: #7c8596;
+  letter-spacing: 0.12em;
+  text-shadow: 0 -1px 0 rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03);
+}
+/* Hub rivets */
+.hub-rivet {
+  position: absolute; z-index: 13;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f0d78c, #b89246);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+.hub-rivet:nth-child(2) { top: 3px;  left: 50%; transform: translateX(-50%); }
+.hub-rivet:nth-child(3) { bottom: 3px; left: 50%; transform: translateX(-50%); }
+.hub-rivet:nth-child(4) { left: 3px;  top: 50%; transform: translateY(-50%); }
+.hub-rivet:nth-child(5) { right: 3px; top: 50%; transform: translateY(-50%); }
+
+/* ═══════════════════════════════════════════════════════
+   SPIN BUTTON
+   ═══════════════════════════════════════════════════════ */
+.spin-btn {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 14;
+  width: 96px; height: 96px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.8);
+  background: radial-gradient(circle at 38% 28%, rgba(255,255,255,0.35), transparent 28%),
+              linear-gradient(180deg, #f0d78c 0%, #d4a850 48%, #8b6914 100%);
+  color: #fff;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 17px; font-weight: 900; letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(139,105,20,0.4), 0 0 0 4px rgba(255,255,255,0.15), inset 0 2px 0 rgba(255,255,255,0.4);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s ease;
+}
+.spin-btn:disabled {
+  cursor: not-allowed;
+  background: radial-gradient(circle at 38% 28%, rgba(255,255,255,0.12), transparent 28%),
+              linear-gradient(180deg, #94a3b8, #64748b);
+  box-shadow: 0 4px 16px rgba(100,116,139,0.25);
+  border-color: rgba(255,255,255,0.35);
+  color: #e2e8f0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOP POINTER — Double triangle + pendant + ribbons
+   ═══════════════════════════════════════════════════════ */
+.wheel-pointer {
+  position: absolute; top: -18px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,0.3));
+}
+.pointer-pendant {
+  position: absolute; top: -10px; left: 50%;
+  transform: translateX(-50%);
+  width: 8px; height: 8px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f0d78c, #c9a042);
+  box-shadow: 0 0 10px rgba(212,168,80,0.6);
+  animation: pendantGlow 1.8s ease-in-out infinite;
+  z-index: 16;
+}
+@keyframes pendantGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(212,168,80,0.4); }
+  50% { box-shadow: 0 0 18px rgba(212,168,80,0.8); }
+}
+.pointer-ribbon-l, .pointer-ribbon-r {
+  position: absolute; top: 14px;
+  width: 36px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,168,80,0.4));
+  z-index: 14;
+}
+.pointer-ribbon-l { right: 58px; transform: rotate(-14deg); }
+.pointer-ribbon-r { left: 58px; transform: rotate(14deg); background: linear-gradient(90deg, rgba(212,168,80,0.4), transparent); }
+
+/* ═══════════════════════════════════════════════════════
+   COIN RAIN — z-index 1 (below wheel segments at 8)
+   ═══════════════════════════════════════════════════════ */
+.coin-rain-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+.coin {
+  position: absolute;
+  top: -50px;
+  animation: coinFall linear infinite;
+  will-change: transform;
+}
+@keyframes coinFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+  4%   { opacity: 0.88; }
+  88%  { opacity: 0.82; }
+  100% { transform: translateY(620px) rotate(360deg); opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   HINT AREA
+   ═══════════════════════════════════════════════════════ */
+.wheel-hint-area {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin-top: 10px; z-index: 2;
+}
+.wheel-hint-text {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 13px; font-weight: 600; color: #999;
+}
+.wheel-hint-line {
+  width: 80px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(184,146,70,0.35), transparent);
+  margin: 6px auto 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════ */
+@media (max-width: 620px) {
+  .wheel-container { width: 360px; height: 390px; }
+  .wheel-outer-ring, .wheel-metal-texture, .wheel-metal-edge { width: 312px; height: 312px; }
+  .wheel-inner-ring { width: 286px; height: 286px; }
+  .wheel-segments { width: 278px; height: 278px; }
+  .seg-label { font-size: 11px; width: 64px; }
+  .seg-0 { transform: translate(24px, -104px); }
+  .seg-1 { transform: translate(78px, -68px); }
+  .seg-2 { transform: translate(96px, -8px); }
+  .seg-3 { transform: translate(78px, 54px); }
+  .seg-4 { transform: translate(24px, 92px); }
+  .seg-5 { transform: translate(-40px, 92px); }
+  .seg-6 { transform: translate(-94px, 54px); }
+  .seg-7 { transform: translate(-112px, -8px); }
+  .seg-8 { transform: translate(-94px, -68px); }
+  .seg-9 { transform: translate(-40px, -104px); }
+  .spin-btn { width: 72px; height: 72px; font-size: 14px; border-width: 2px; }
+  .wheel-ambient { width: 340px; height: 340px; }
+  .star-dust-ring { width: 340px; height: 340px; }
+  .dragon-stage { height: 100px; }
+  .dragon-char { width: 85px; height: 95px; }
+}
+</style>
+</head>
+<body>
+
+<div class="main-container">
+
+  <!-- ══════════════════════════════════════════════════
+       LAYER 0: SKYWORTH BLUE DRAGON WALKING CHARACTER
+       ══════════════════════════════════════════════════ -->
+  <div class="dragon-stage" id="dragonStage">
+    <div class="dragon-char" id="dragonChar">
+      <div class="dragon-svg-wrap">
+        <svg width="110" height="120" viewBox="0 0 110 120" xmlns="http://www.w3.org/2000/svg">
+          <!-- SKYWORTH Blue Dragon IP — Do not modify features -->
+          <defs>
+            <linearGradient id="hdGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#5b9bd5"/>
+              <stop offset="45%" stop-color="#3a7cc3"/>
+              <stop offset="100%" stop-color="#1a4d7e"/>
+            </linearGradient>
+            <linearGradient id="hornGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#b3e0f5"/>
+              <stop offset="100%" stop-color="#6cb4d9"/>
+            </linearGradient>
+            <radialGradient id="cheekGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ffccd5"/>
+              <stop offset="100%" stop-color="#ff8fa3"/>
+            </radialGradient>
+            <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#d4eafc"/>
+              <stop offset="100%" stop-color="#a8d4f0"/>
+            </linearGradient>
+            <linearGradient id="collarGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#a3d5f0"/>
+              <stop offset="100%" stop-color="#6fb3d9"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Outer white outline (whole character) -->
+          <g stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round" fill="none" opacity="0.9">
+            <!-- Dark blue thick outline underneath -->
+          </g>
+
+          <!-- === DARK BLUE OUTLINE GROUP === -->
+          <g stroke="#1a3a5c" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+
+            <!-- Spiky hair -->
+            <g fill="url(#hdGrad)" stroke="#1a3a5c" stroke-width="2.5">
+              <path d="M37 28 L32 8 L38 5 L43 14 L48 4 L53 11 L58 3 L63 13 L68 7 L67 28 Z"/>
+            </g>
+
+            <!-- Horns -->
+            <g fill="url(#hornGrad)" stroke="#1a3a5c" stroke-width="2">
+              <path d="M34 30 L26 14 L33 13 Z"/>
+              <path d="M71 30 L79 14 L72 13 Z"/>
+            </g>
+
+            <!-- Elf ears -->
+            <g fill="#fce4d6" stroke="#1a3a5c" stroke-width="2">
+              <ellipse cx="26" cy="38" rx="7" ry="12" transform="rotate(-18,26,38)"/>
+              <ellipse cx="79" cy="38" rx="7" ry="12" transform="rotate(18,79,38)"/>
+            </g>
+
+            <!-- Face -->
+            <ellipse cx="52" cy="42" rx="20" ry="17" fill="#fce4d6" stroke="#1a3a5c" stroke-width="2.5"/>
+
+            <!-- Eyes — big round bright blue -->
+            <ellipse cx="44" cy="38" rx="5" ry="5.5" fill="#4a9eff" stroke="#1a3a5c" stroke-width="1.5"/>
+            <ellipse cx="60" cy="38" rx="5" ry="5.5" fill="#4a9eff" stroke="#1a3a5c" stroke-width="1.5"/>
+            <!-- Eye highlights -->
+            <circle cx="45" cy="36" r="2" fill="white" stroke="none"/>
+            <circle cx="61" cy="36" r="2" fill="white" stroke="none"/>
+            <circle cx="43" cy="39" r="1" fill="white" stroke="none" opacity="0.6"/>
+            <circle cx="59" cy="39" r="1" fill="white" stroke="none" opacity="0.6"/>
+
+            <!-- Eyebrows — dark blue thin -->
+            <path d="M37 31 L49 34" fill="none" stroke="#1a3a5c" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M67 31 L55 34" fill="none" stroke="#1a3a5c" stroke-width="1.8" stroke-linecap="round"/>
+
+            <!-- Mouth — open happy smile -->
+            <path class="dragon-mouth" d="M44 47 Q52 54 60 47" fill="none" stroke="#1a3a5c" stroke-width="1.8" stroke-linecap="round"/>
+
+            <!-- Cheek blush -->
+            <circle cx="38" cy="45" r="5" fill="url(#cheekGrad)" opacity="0.45" stroke="none"/>
+            <circle cx="66" cy="45" r="5" fill="url(#cheekGrad)" opacity="0.45" stroke="none"/>
+
+            <!-- Body -->
+            <ellipse cx="52" cy="76" rx="24" ry="28" fill="url(#bodyGrad)" stroke="#1a3a5c" stroke-width="2.5"/>
+
+            <!-- Scale collar (fish scale pattern) -->
+            <g fill="url(#collarGrad)" stroke="#1a3a5c" stroke-width="1.5">
+              <path d="M28 62 Q35 57 42 60 Q40 63 35 64 Q30 63 28 62 Z"/>
+              <path d="M42 60 Q52 56 62 60 Q60 63 52 64 Q44 63 42 60 Z"/>
+              <path d="M62 60 Q69 57 76 62 Q74 63 69 64 Q64 63 62 60 Z"/>
+            </g>
+
+            <!-- "创1999" on chest -->
+            <text x="52" y="70" text-anchor="middle" font-size="7.5" font-weight="800" fill="#1a3a5c" font-family="sans-serif" stroke="none">创1999</text>
+
+            <!-- White long sleeves -->
+            <g fill="white" stroke="#1a3a5c" stroke-width="2">
+              <path d="M28 66 L15 58 L18 54 L32 62 Z"/>
+              <path d="M76 66 L89 58 L86 54 L72 62 Z"/>
+            </g>
+
+            <!-- Arms holding basket -->
+            <g fill="white" stroke="#1a3a5c" stroke-width="2">
+              <line x1="28" y1="68" x2="22" y2="78"/>
+              <line x1="76" y1="68" x2="82" y2="78"/>
+            </g>
+
+            <!-- Hands -->
+            <circle cx="22" cy="80" r="4" fill="#fce4d6" stroke="#1a3a5c" stroke-width="1.8"/>
+            <circle cx="82" cy="80" r="4" fill="#fce4d6" stroke="#1a3a5c" stroke-width="1.8"/>
+
+            <!-- White long pants -->
+            <g fill="white" stroke="#1a3a5c" stroke-width="2">
+              <rect x="34" y="96" width="14" height="18" rx="5"/>
+              <rect x="56" y="96" width="14" height="18" rx="5"/>
+            </g>
+
+            <!-- Blue short boots -->
+            <g fill="#2e6fa8" stroke="#1a3a5c" stroke-width="2">
+              <rect x="32" y="110" width="18" height="8" rx="4"/>
+              <rect x="54" y="110" width="18" height="8" rx="4"/>
+            </g>
+
+            <!-- Basket in front -->
+            <g stroke="#1a3a5c" stroke-width="2">
+              <ellipse cx="52" cy="82" rx="18" ry="9" fill="#e8d5a3" stroke-width="2"/>
+              <path d="M34 82 Q52 70 70 82" fill="none" stroke="#b89246" stroke-width="2"/>
+              <line x1="42" y1="73" x2="42" y2="82" stroke="#b89246" stroke-width="1"/>
+              <line x1="52" y1="73" x2="52" y2="82" stroke="#b89246" stroke-width="1"/>
+              <line x1="62" y1="73" x2="62" y2="82" stroke="#b89246" stroke-width="1"/>
+              <!-- Basket rim highlight -->
+              <ellipse cx="52" cy="82" rx="18" ry="9" fill="none" stroke="#f0d78c" stroke-width="0.8" opacity="0.5"/>
+            </g>
+
+            <!-- White outline overlay -->
+            <g stroke="#ffffff" stroke-width="0.6" fill="none" opacity="0.55">
+              <path d="M37 28 L32 8 L38 5 L43 14 L48 4 L53 11 L58 3 L63 13 L68 7 L67 28"/>
+              <ellipse cx="52" cy="42" rx="20" ry="17"/>
+              <ellipse cx="52" cy="76" rx="24" ry="28"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       MAIN WHEEL STAGE
+       ══════════════════════════════════════════════════ -->
+  <div class="wheel-stage">
+    <div class="wheel-container" id="wheelContainer">
+
+      <!-- Ambient light -->
+      <div class="wheel-ambient"></div>
+
+      <!-- Bottom shadow -->
+      <div class="wheel-shadow"></div>
+
+      <!-- Star dust ring -->
+      <div class="star-dust-ring" id="starDustRing"></div>
+
+      <!-- Outer double metal ring -->
+      <div class="wheel-outer-ring"></div>
+      <div class="wheel-inner-ring"></div>
+      <div class="wheel-metal-texture"></div>
+      <div class="wheel-metal-edge"></div>
+
+      <!-- Rivets -->
+      <div id="rivetsContainer"></div>
+
+      <!-- Coin Rain Layer (z-index 1, BELOW wheel segments at z-index 8) -->
+      <div class="coin-rain-container" id="coinRainContainer"></div>
+
+      <!-- Wheel segments -->
+      <div class="wheel-segments"></div>
+
+      <!-- Segment text labels -->
+      <span class="seg-label seg-0">50,000<br>Points</span>
+      <span class="seg-label seg-1">QLED TV</span>
+      <span class="seg-label seg-2">Missed</span>
+      <span class="seg-label seg-3">Hand Fan</span>
+      <span class="seg-label seg-4">Electric<br>Toothbrush</span>
+      <span class="seg-label seg-5">Electric<br>Shaver</span>
+      <span class="seg-label seg-6">Bluetooth<br>Earbuds</span>
+      <span class="seg-label seg-7">Green Bag</span>
+      <span class="seg-label seg-8">20,000<br>Points</span>
+      <span class="seg-label seg-9">50,000<br>Points</span>
+
+      <!-- LOCKED Center Hub -->
+      <div class="wheel-center-hub">
+        <div class="hub-outer">
+          <div class="hub-mid">
+            <div class="hub-inner">
+              <span class="hub-text">LOCKED</span>
+            </div>
+          </div>
+        </div>
+        <div class="hub-rivet"></div>
+        <div class="hub-rivet"></div>
+        <div class="hub-rivet"></div>
+        <div class="hub-rivet"></div>
+      </div>
+
+      <!-- SPIN Button -->
+      <button class="spin-btn" id="spinButton" type="button" disabled>SPIN</button>
+
+      <!-- Top Pointer -->
+      <div class="wheel-pointer">
+        <svg width="48" height="54" viewBox="0 0 48 54">
+          <defs>
+            <linearGradient id="ptrGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#f0d78c"/>
+              <stop offset="50%" stop-color="#c9a042"/>
+              <stop offset="100%" stop-color="#8b6914"/>
+            </linearGradient>
+          </defs>
+          <polygon points="24,48 3,6 45,6" fill="rgba(0,0,0,0.18)" transform="translate(0,3)"/>
+          <polygon points="24,48 3,6 45,6" fill="url(#ptrGrad)"/>
+          <polygon points="24,44 8,8 40,8" fill="#e8d5a3" opacity="0.5"/>
+          <line x1="24" y1="44" x2="24" y2="10" stroke="#f0d78c" stroke-width="1" opacity="0.65"/>
+        </svg>
+      </div>
+      <div class="pointer-pendant"></div>
+      <div class="pointer-ribbon-l"></div>
+      <div class="pointer-ribbon-r"></div>
+
+      <!-- Pedestal Base -->
+      <div class="wheel-pedestal"></div>
+    </div>
+
+    <!-- Hint Area -->
+    <div class="wheel-hint-area">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b89246" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span class="wheel-hint-text">Submit sales record to unlock.</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b89246" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <div class="wheel-hint-line"></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     JAVASCRIPT: Star dust + Rivets + Coin Rain + Dragon Walk
+     ═══════════════════════════════════════════════════════ -->
+<script>
+(function() {
+  'use strict';
+
+  const wheelContainer = document.getElementById('wheelContainer');
+  const dragonChar = document.getElementById('dragonChar');
+  const dragonStage = document.getElementById('dragonStage');
+  const coinRainContainer = document.getElementById('coinRainContainer');
+
+  // ── Generate Star Dust Dots ──
+  (function() {
+    const ring = document.getElementById('starDustRing');
+    const cx = wheelContainer.clientWidth / 2;
+    const cy = wheelContainer.clientHeight / 2;
+    const baseR = 228;
+    for (let i = 0; i < 36; i++) {
+      const angle = (i / 36) * Math.PI * 2 + (Math.random() - 0.5) * 0.12;
+      const r = baseR + (Math.random() - 0.5) * 28;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      const dot = document.createElement('div');
+      dot.style.cssText = `
+        position:absolute;width:${1.5+Math.random()*2.5}px;height:${1.5+Math.random()*2.5}px;
+        border-radius:50%;background:rgba(255,255,255,${0.35+Math.random()*0.45});
+        box-shadow:0 0 ${2+Math.random()*3}px rgba(255,255,240,0.4);
+        left:${x}px;top:${y}px;
+        animation:starTwinkle ${1.5+Math.random()*3}s ease-in-out infinite;
+        animation-delay:${Math.random()*3}s;
+      `;
+      ring.appendChild(dot);
+    }
+    const style = document.createElement('style');
+    style.textContent = `@keyframes starTwinkle{0%,100%{opacity:0.15;transform:scale(1)}50%{opacity:0.7;transform:scale(1.6)}}`;
+    document.head.appendChild(style);
+  })();
+
+  // ── Generate Rivets ──
+  (function() {
+    const container = document.getElementById('rivetsContainer');
+    const cx = wheelContainer.clientWidth / 2;
+    const cy = wheelContainer.clientHeight / 2;
+    const r = 218;
+    for (let i = 0; i < 18; i++) {
+      const angle = (i / 18) * Math.PI * 2;
+      const x = cx + Math.cos(angle) * r - 5;
+      const y = cy + Math.sin(angle) * r - 5;
+      const rivet = document.createElement('div');
+      rivet.className = 'wheel-rivet';
+      rivet.style.cssText = `left:${x}px;top:${y}px;`;
+      container.appendChild(rivet);
+    }
+  })();
+
+  // ── Coin Rain System ──
+  const coinPalettes = [
+    { fill: '#d4a850', stroke: '#8b6914', inner: '#f0d78c', text: '#8b6914' },
+    { fill: '#e8d5a3', stroke: '#b89246', inner: '#f0d78c', text: '#8b6914' },
+    { fill: '#c9a042', stroke: '#8b6914', inner: '#e8d5a3', text: '#6b4f10' },
+    { fill: '#dbc070', stroke: '#9a7420', inner: '#f5e6b8', text: '#8b6914' },
+  ];
+
+  let uidCounter = 0;
+  const maxCoins = 14;
+  let activeCoins = 0;
+
+  function makeCoinSVG(palette, size) {
+    return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="20" r="18" fill="${palette.fill}" stroke="${palette.stroke}" stroke-width="2"/>
+      <circle cx="20" cy="20" r="14" fill="none" stroke="${palette.inner}" stroke-width="0.8" opacity="0.5"/>
+      <circle cx="15" cy="13" r="4" fill="white" opacity="0.2"/>
+      <text x="20" y="25" text-anchor="middle" fill="${palette.text}" font-size="12" font-weight="900" font-family="Inter,system-ui,sans-serif">¥</text>
+    </svg>`;
+  }
+
+  function spawnCoin() {
+    if (activeCoins >= maxCoins) return;
+    activeCoins++;
+    const palette = coinPalettes[Math.floor(Math.random() * coinPalettes.length)];
+    const size = 16 + Math.random() * 20;
+    const leftPct = 5 + Math.random() * 85;
+    const duration = 3.5 + Math.random() * 2.5;
+    const delay = Math.random() * 2;
+    const coinId = 'coin-' + (uidCounter++);
+
+    const el = document.createElement('div');
+    el.className = 'coin';
+    el.id = coinId;
+    el.style.cssText = `
+      left:${leftPct}%;
+      width:${size}px;height:${size}px;
+      animation-duration:${duration}s;
+      animation-delay:${delay}s;
+    `;
+    el.innerHTML = makeCoinSVG(palette, size);
+    coinRainContainer.appendChild(el);
+
+    // Check basket catch
+    let caught = false;
+    const checkTimer = setInterval(() => {
+      if (caught) { clearInterval(checkTimer); return; }
+      if (!el.parentNode) { clearInterval(checkTimer); return; }
+
+      const coinR = el.getBoundingClientRect();
+      const dragonR = dragonChar.getBoundingClientRect();
+
+      const coinBottom = coinR.top + coinR.height;
+      const dragonTop = dragonR.top;
+      const dragonBottom = dragonR.bottom;
+      const dragonMidX = dragonR.left + dragonR.width / 2;
+      const coinMidX = coinR.left + coinR.width / 2;
+      const catchRange = dragonR.width * 0.35;
+
+      // Coin is in dragon's basket height zone and horizontal range
+      if (coinBottom >= dragonTop + dragonR.height * 0.1 &&
+          coinBottom <= dragonTop + dragonR.height * 0.6 &&
+          Math.abs(coinMidX - dragonMidX) < catchRange) {
+        caught = true;
+        clearInterval(checkTimer);
+        activeCoins--;
+
+        // Create sparkle
+        const sparkle = document.createElement('div');
+        sparkle.className = 'coin-sparkle';
+        sparkle.style.cssText = `
+          left:${coinMidX - 12}px;top:${coinR.top + coinR.height/2 - 12}px;
+          width:24px;height:24px;
+          background:radial-gradient(circle,rgba(240,215,140,0.9),rgba(212,168,80,0.4),transparent);
+          border-radius:50%;
+        `;
+        document.body.appendChild(sparkle);
+        setTimeout(() => sparkle.remove(), 600);
+
+        // Dragon hit reaction
+        dragonChar.classList.add('hit');
+        setTimeout(() => dragonChar.classList.remove('hit'), 550);
+
+        // Coin shrink out
+        el.style.transition = 'all 0.3s ease-out';
+        el.style.transform = 'scale(0)';
+        el.style.opacity = '0';
+        setTimeout(() => { if (el.parentNode) el.remove(); }, 350);
+        setTimeout(() => spawnCoin(), 400 + Math.random() * 900);
+      }
+
+      // Fell past dragon without catch
+      if (coinR.top > dragonR.bottom + 50) {
+        clearInterval(checkTimer);
+        caught = true;
+        el.style.transition = 'opacity 0.6s ease-out';
+        el.style.opacity = '0';
+        setTimeout(() => {
+          if (el.parentNode) { el.remove(); activeCoins--; }
+          setTimeout(spawnCoin, 300 + Math.random() * 700);
+        }, 650);
+      }
+    }, 60);
+
+    // Fallback cleanup on animation end
+    el.addEventListener('animationend', () => {
+      if (!caught && el.parentNode) {
+        caught = true;
+        el.remove();
+        activeCoins--;
+        setTimeout(spawnCoin, 300 + Math.random() * 600);
+      }
+    });
+  }
+
+  // ── Dragon Walk Flip Detection ──
+  function updateDragonFlip() {
+    const dRect = dragonChar.getBoundingClientRect();
+    const sRect = dragonStage.getBoundingClientRect();
+    const dCenter = dRect.left + dRect.width / 2;
+    const leftBound = sRect.left + dRect.width * 0.55;
+    const rightBound = sRect.right - dRect.width * 0.55;
+
+    if (dCenter <= leftBound) {
+      dragonChar.classList.remove('flip');
+    } else if (dCenter >= rightBound) {
+      dragonChar.classList.add('flip');
+    }
+  }
+
+  // ── Initialize ──
+  // Spawn initial coins with staggered timing
+  for (let i = 0; i < 8; i++) {
+    setTimeout(spawnCoin, i * 350);
+  }
+  // Top-up spawner
+  setInterval(() => {
+    if (activeCoins < maxCoins - 4) spawnCoin();
+  }, 1600);
+
+  // Flip checker
+  setInterval(updateDragonFlip, 80);
+
+})();
+</script>
+
+</body>
+</html>

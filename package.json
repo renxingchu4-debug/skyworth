@@ -1,0 +1,14 @@
+{
+  "name": "skyworth-learning-rewards-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SKYWORTH learning, sales records, lucky draw, and points mall platform.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check app.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

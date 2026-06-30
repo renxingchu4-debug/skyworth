@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKYWORTH Lucky Draw</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   SKYWORTH LUCKY DRAW — Premium SaaS Lottery Wheel
+   Design: Light-luxury with gamified coin-rain decoration
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Font ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ── CSS Variables ── */
+:root {
+  --gold: #b89246;
+  --gold-light: #d4a850;
+  --gold-pale: #e8d5a3;
+  --gold-dark: #8b6914;
+  --blue-soft: #3c67c2;
+  --blue-light: #46a1b8;
+  --bg-warm: #f7f5f0;
+  --bg-card: rgba(255,255,255,0.72);
+  --text-primary: #1e1e24;
+  --text-muted: #7a7d88;
+  --border-gold: rgba(184,146,70,0.28);
+  --shadow-gold: rgba(184,146,70,0.18);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { 
+  font-family: var(--font); 
+  background: var(--bg-warm);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 1 — GLOBAL BACKGROUND & AMBIENCE
+   ═══════════════════════════════════════════════════════════════ */
+.global-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* Radial gradient base */
+.global-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 20%, rgba(220,200,160,0.18) 0%, transparent 55%),
+              radial-gradient(ellipse at 75% 80%, rgba(70,130,180,0.12) 0%, transparent 55%),
+              radial-gradient(ellipse at 50% 50%, #f7f5f0 0%, #ece7dc 100%);
+}
+/* Geometric appliance line-art pattern (TV, headphone, fan, shaver) */
+.global-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%238b7355' stroke-width='1.2'%3E%3Crect x='10' y='10' width='80' height='52' rx='4'/%3E%3Crect x='16' y='16' width='68' height='40' rx='2'/%3E%3Ccircle cx='50' cy='90' r='18'/%3E%3Ccircle cx='50' cy='90' r='10'/%3E%3Cpath d='M80 110 L90 130 Q100 135 110 130 L120 110'/%3E%3Crect x='130' y='10' width='30' height='70' rx='6'/%3E%3Cpath d='M130 30 L115 20 L115 50'/%3E%3Crect x='135' y='110' width='20' height='50' rx='4'/%3E%3Ccircle cx='145' cy='118' r='3'/%3E%3Ccircle cx='145' cy='135' r='3'/%3E%3Ccircle cx='145' cy='152' r='3'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* Corner ambient glows */
+.ambient-glow-tl {
+  position: fixed; top: -120px; left: -120px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(212,168,80,0.12) 0%, transparent 70%);
+  border-radius: 50%; pointer-events: none; z-index: 0;
+}
+.ambient-glow-br {
+  position: fixed; bottom: -120px; right: -120px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(70,161,184,0.1) 0%, transparent 70%);
+  border-radius: 50%; pointer-events: none; z-index: 0;
+}
+
+/* Outer gold-bordered frame — floating display screen */
+.page-frame {
+  position: relative;
+  z-index: 1;
+  max-width: 1480px;
+  margin: 32px auto;
+  border: 1.5px solid rgba(184,146,70,0.22);
+  border-radius: var(--radius-xl);
+  background: rgba(255,255,255,0.28);
+  backdrop-filter: blur(4px);
+  box-shadow: 
+    0 0 0 1px rgba(255,255,255,0.5),
+    0 8px 48px rgba(0,0,0,0.06),
+    0 2px 8px rgba(0,0,0,0.04),
+    inset 0 0 80px rgba(212,168,80,0.03);
+  padding: 48px 44px 44px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 2 — TOP NAV BAR
+   ═══════════════════════════════════════════════════════════════ */
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 10;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 22px;
+  color: #1a1a2e;
+  letter-spacing: -0.02em;
+}
+.nav-brand-dot {
+  width: 8px; height: 8px;
+  background: var(--gold-light);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(212,168,80,0.6);
+}
+.nav-links {
+  display: flex;
+  gap: 6px;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(184,146,70,0.15);
+  border-radius: 14px;
+  padding: 5px;
+}
+.nav-link {
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.nav-link.active {
+  background: linear-gradient(135deg, #b89246, #8b6914);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(184,146,70,0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 3 — MAIN THREE-COLUMN LAYOUT
+   ═══════════════════════════════════════════════════════════════ */
+.main-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  gap: 36px;
+  align-items: start;
+  position: relative;
+  z-index: 2;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 4 — SIDE CARDS (Left & Right)
+   ═══════════════════════════════════════════════════════════════ */
+.side-card {
+  position: relative;
+  background: rgba(255,255,255,0.68);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(184,146,70,0.3);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.05),
+    0 1px 4px rgba(0,0,0,0.03),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.35s ease;
+}
+.side-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 16px 40px rgba(0,0,0,0.1),
+    0 2px 8px rgba(0,0,0,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+}
+/* Metal chamfer corners */
+.side-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  pointer-events: none;
+  background: 
+    linear-gradient(135deg, rgba(212,168,80,0.12) 0%, transparent 30%),
+    linear-gradient(225deg, transparent 70%, rgba(212,168,80,0.08) 100%);
+}
+.side-card-inner {
+  position: relative;
+  padding: 28px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  z-index: 1;
+}
+
+/* Card header with decorative icon */
+.card-header-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.card-divider {
+  width: 48px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-gold), transparent);
+  margin: 4px 0;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Left card: big number with glow */
+.big-number-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.big-number-glow {
+  position: absolute;
+  width: 110px; height: 110px;
+  background: radial-gradient(circle, rgba(60,103,194,0.12) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.big-number-dots {
+  position: absolute;
+  width: 130px; height: 130px;
+  border-radius: 50%;
+  background-image: radial-gradient(circle, rgba(60,103,194,0.08) 1px, transparent 1px);
+  background-size: 10px 10px;
+}
+.big-number {
+  position: relative;
+  font-size: 80px;
+  font-weight: 900;
+  line-height: 1;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 20px rgba(60,103,194,0.2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Card button with gift box icons */
+.card-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 26px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #b89246, #8b6914);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 
+    0 4px 16px rgba(184,146,70,0.3),
+    0 1px 0 rgba(255,255,255,0.3) inset;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.card-btn::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+.card-btn:hover::after {
+  left: 100%;
+}
+.card-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 24px rgba(184,146,70,0.4),
+    0 2px 0 rgba(255,255,255,0.35) inset;
+}
+
+/* Brand watermark */
+.brand-watermark {
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(184,146,70,0.18);
+  letter-spacing: 0.12em;
+  pointer-events: none;
+}
+
+/* ── Right Card: Winners List ── */
+.winners-list-area {
+  width: 100%;
+  min-height: 180px;
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.winners-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+}
+.winners-empty-text {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+.winners-empty-gift {
+  opacity: 0.18;
+}
+
+/* Star decorations */
+.card-stars {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 5 — WHEEL CENTER STAGE
+   ═══════════════════════════════════════════════════════════════ */
+.wheel-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+/* Wheel container — holds background decor + wheel itself */
+.wheel-container {
+  position: relative;
+  width: 520px;
+  height: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 5.1 — COIN RAIN & CATCHING CHARACTER (BG Layer)
+   z-index: 0 — BELOW all wheel segments
+   ═══════════════════════════════════════════════════════════════ */
+.coin-rain-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+/* Individual falling coins */
+.coin {
+  position: absolute;
+  animation: coinFall linear infinite;
+  opacity: 0;
+}
+.coin svg { width: 100%; height: 100%; }
+
+@keyframes coinFall {
+  0%   { transform: translateY(-60px) rotate(0deg); opacity: 0; }
+  5%   { opacity: 0.75; }
+  85%  { opacity: 0.7; }
+  100% { transform: translateY(540px) rotate(720deg); opacity: 0; }
+}
+@keyframes coinShine {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.4); }
+}
+
+.coin:nth-child(1)  { left: 8%;  width: 24px; height: 24px; animation-duration: 3.2s; animation-delay: 0s; }
+.coin:nth-child(2)  { left: 22%; width: 18px; height: 18px; animation-duration: 3.8s; animation-delay: 0.6s; }
+.coin:nth-child(3)  { left: 38%; width: 28px; height: 28px; animation-duration: 4.1s; animation-delay: 1.2s; }
+.coin:nth-child(4)  { left: 55%; width: 20px; height: 20px; animation-duration: 3.5s; animation-delay: 0.3s; }
+.coin:nth-child(5)  { left: 70%; width: 26px; height: 26px; animation-duration: 4.4s; animation-delay: 1.8s; }
+.coin:nth-child(6)  { left: 82%; width: 16px; height: 16px; animation-duration: 3.0s; animation-delay: 2.1s; }
+.coin:nth-child(7)  { left: 15%; width: 22px; height: 22px; animation-duration: 3.6s; animation-delay: 2.5s; }
+.coin:nth-child(8)  { left: 48%; width: 14px; height: 14px; animation-duration: 4.7s; animation-delay: 1.4s; }
+.coin:nth-child(9)  { left: 65%; width: 30px; height: 30px; animation-duration: 3.3s; animation-delay: 0.9s; }
+.coin:nth-child(10) { left: 32%; width: 19px; height: 19px; animation-duration: 4.0s; animation-delay: 2.8s; }
+
+/* Q-style character catching coins */
+.coin-catcher {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 0;
+  pointer-events: none;
+  animation: catcherBounce 2s ease-in-out infinite;
+}
+@keyframes catcherBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-4px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 5.2 — OUTER METAL RING (Double-layer)
+   ═══════════════════════════════════════════════════════════════ */
+.wheel-outer-ring {
+  position: absolute;
+  width: 440px;
+  height: 440px;
+  border-radius: 50%;
+  z-index: 2;
+  pointer-events: none;
+  /* Outer coarse brushed gold */
+  background: radial-gradient(circle at 42% 35%, #f0d78c 0%, #d4a850 25%, #b89246 55%, #8b6914 85%, #6b4f10 100%);
+  box-shadow:
+    0 0 0 8px rgba(184,146,70,0.45),
+    0 0 0 16px rgba(160,120,50,0.2),
+    0 0 0 22px rgba(140,100,40,0.1),
+    0 18px 60px rgba(0,0,0,0.2);
+}
+/* Inner fine gold inlay */
+.wheel-inner-ring {
+  position: absolute;
+  width: 412px;
+  height: 412px;
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+  border: 2px solid rgba(232,213,163,0.5);
+  box-shadow: inset 0 0 14px rgba(212,168,80,0.2);
+}
+/* Brushed metal highlight bands */
+.wheel-metal-highlight {
+  position: absolute;
+  width: 440px;
+  height: 440px;
+  border-radius: 50%;
+  z-index: 4;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg, rgba(255,255,255,0.08) 15deg, transparent 30deg,
+    transparent 90deg, rgba(255,255,255,0.05) 105deg, transparent 120deg,
+    transparent 180deg, rgba(255,255,255,0.1) 195deg, transparent 210deg,
+    transparent 270deg, rgba(255,255,255,0.06) 285deg, transparent 300deg
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 5.3 — WHEEL SEGMENTS (10 prizes, forced color palette)
+   ═══════════════════════════════════════════════════════════════ */
+.wheel-segments {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  z-index: 5;
+  overflow: hidden;
+  /* Conic gradient — 10 sectors, 36° each, center-light outer-dark */
+  background: conic-gradient(
+    /* seg-0: 50,000 Points — #b89246 warm bronze gold */
+    #d4b86a 0deg, #b89246 18deg, #8b6914 36deg,
+    /* seg-1: QLED TV — #9c3b3b matte wine red */
+    #b85a5a 36deg, #9c3b3b 54deg, #6e2828 72deg,
+    /* seg-2: Missed — #a3a8b0 neutral light gray (lowest saturation) */
+    #c0c4ca 72deg, #a3a8b0 90deg, #7e838a 108deg,
+    /* seg-3: Hand Fan — #d17838 low-sat terracotta orange */
+    #e09a5e 108deg, #d17838 126deg, #9e5624 144deg,
+    /* seg-4: Electric Toothbrush — #3c67c2 soft royal blue */
+    #5c88d8 144deg, #3c67c2 162deg, #28489a 180deg,
+    /* seg-5: Electric Shaver — #489990 morandi aqua green */
+    #64b0a8 180deg, #489990 198deg, #2e7068 216deg,
+    /* seg-6: Bluetooth Earbuds — #7c58c2 gray-lavender purple */
+    #9c7cd6 216deg, #7c58c2 234deg, #543a90 252deg,
+    /* seg-7: Green Bag — #589962 sage low-sat green */
+    #76b87f 252deg, #589962 270deg, #3a7044 288deg,
+    /* seg-8: 20,000 Points — #46a1b8 light cyan-blue */
+    #64b8cc 288deg, #46a1b8 306deg, #2e7a90 324deg,
+    /* seg-9: 50,000 Points — #b89246 warm bronze gold */
+    #d4b86a 324deg, #b89246 342deg, #8b6914 360deg
+  );
+}
+/* Slot divider overlay — 1px off-white lines between sectors */
+.wheel-segments::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    transparent 0deg, transparent 35.5deg, rgba(255,250,240,0.5) 35.5deg, rgba(255,250,240,0.5) 36.5deg, transparent 36.5deg,
+    transparent 71.5deg, rgba(255,250,240,0.5) 71.5deg, rgba(255,250,240,0.5) 72.5deg, transparent 72.5deg,
+    transparent 107.5deg, rgba(255,250,240,0.5) 107.5deg, rgba(255,250,240,0.5) 108.5deg, transparent 108.5deg,
+    transparent 143.5deg, rgba(255,250,240,0.5) 143.5deg, rgba(255,250,240,0.5) 144.5deg, transparent 144.5deg,
+    transparent 179.5deg, rgba(255,250,240,0.5) 179.5deg, rgba(255,250,240,0.5) 180.5deg, transparent 180.5deg,
+    transparent 215.5deg, rgba(255,250,240,0.5) 215.5deg, rgba(255,250,240,0.5) 216.5deg, transparent 216.5deg,
+    transparent 251.5deg, rgba(255,250,240,0.5) 251.5deg, rgba(255,250,240,0.5) 252.5deg, transparent 252.5deg,
+    transparent 287.5deg, rgba(255,250,240,0.5) 287.5deg, rgba(255,250,240,0.5) 288.5deg, transparent 288.5deg,
+    transparent 323.5deg, rgba(255,250,240,0.5) 323.5deg, rgba(255,250,240,0.5) 324.5deg, transparent 324.5deg,
+    transparent 359.5deg, rgba(255,250,240,0.5) 359.5deg, rgba(255,250,240,0.5) 360.5deg, transparent 360.5deg
+  );
+  pointer-events: none;
+  z-index: 6;
+}
+/* Segment text wrapper — positioned mid-radius via absolute */
+.segment-label {
+  position: absolute;
+  width: 80px;
+  text-align: center;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #FFFFFF;
+  text-shadow: 0 0 6px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.4);
+  pointer-events: none;
+  z-index: 10;
+  word-wrap: break-word;
+}
+/* 10 labels positioned at ~65% radius, rotated to readable orientation */
+.seg-label-0 { left: 50%; top: 50%; transform: translate(32px, -132px); }  /* 18° */
+.seg-label-1 { left: 50%; top: 50%; transform: translate(98px, -86px); }   /* 54° */
+.seg-label-2 { left: 50%; top: 50%; transform: translate(122px, -8px); }   /* 90° */
+.seg-label-3 { left: 50%; top: 50%; transform: translate(98px, 68px); }    /* 126° */
+.seg-label-4 { left: 50%; top: 50%; transform: translate(32px, 116px); }   /* 162° */
+.seg-label-5 { left: 50%; top: 50%; transform: translate(-48px, 116px); }  /* 198° */
+.seg-label-6 { left: 50%; top: 50%; transform: translate(-114px, 68px); }  /* 234° */
+.seg-label-7 { left: 50%; top: 50%; transform: translate(-138px, -8px); }  /* 270° */
+.seg-label-8 { left: 50%; top: 50%; transform: translate(-114px, -86px); } /* 306° */
+.seg-label-9 { left: 50%; top: 50%; transform: translate(-48px, -132px); } /* 342° */
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 5.4 — LOCKED CENTER HUB (3 concentric circles)
+   ═══════════════════════════════════════════════════════════════ */
+.wheel-center-hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 7;
+}
+/* Outer gold ring */
+.hub-ring-outer {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #c9a042, #e8d5a3, #b89246, #d4a850, #c9a042);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.2);
+}
+/* Middle matte gray circle */
+.hub-ring-mid {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9ca3af, #6b7280, #4b5563);
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+}
+/* Inner dark recessed circle */
+.hub-ring-inner {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #374151, #1f2937, #111827);
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+}
+.hub-text {
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: 800;
+  color: #6b7280;
+  letter-spacing: 0.1em;
+  text-shadow: 0 -1px 0 rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* 4 micro gold rivets around the hub */
+.hub-rivet {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f0d78c, #b89246);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  z-index: 8;
+}
+.hub-rivet:nth-child(1) { top: 2px;  left: 50%; transform: translateX(-50%); }
+.hub-rivet:nth-child(2) { bottom: 2px; left: 50%; transform: translateX(-50%); }
+.hub-rivet:nth-child(3) { left: 2px;  top: 50%; transform: translateY(-50%); }
+.hub-rivet:nth-child(4) { right: 2px; top: 50%; transform: translateY(-50%); }
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 5.5 — TOP POINTER (double triangle + pendant + ribbons)
+   ═══════════════════════════════════════════════════════════════ */
+.wheel-pointer {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  filter: drop-shadow(0 6px 16px rgba(0,0,0,0.25));
+}
+.pointer-pendant {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f0d78c, #c9a042);
+  box-shadow: 0 0 8px rgba(212,168,80,0.6);
+  animation: pendantGlow 1.8s ease-in-out infinite;
+  z-index: 11;
+}
+@keyframes pendantGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(212,168,80,0.4); }
+  50% { box-shadow: 0 0 16px rgba(212,168,80,0.8); }
+}
+/* Ribbon lines beside pointer */
+.pointer-ribbon-l,
+.pointer-ribbon-r {
+  position: absolute;
+  top: 12px;
+  width: 30px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,168,80,0.5));
+  z-index: 9;
+}
+.pointer-ribbon-l { right: 56px; transform: rotate(-15deg); }
+.pointer-ribbon-r { left: 56px;  transform: rotate(15deg); background: linear-gradient(90deg, rgba(212,168,80,0.5), transparent); }
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 5.6 — PEDESTAL BASE + LOCK HINT
+   ═══════════════════════════════════════════════════════════════ */
+.wheel-pedestal {
+  margin-top: -8px;
+  z-index: 1;
+  position: relative;
+}
+.pedestal-arc {
+  width: 300px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(232,213,163,0.3), rgba(184,146,70,0.15), transparent);
+  box-shadow: 0 -2px 12px rgba(212,168,80,0.1);
+}
+.wheel-hint-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.wheel-hint-text {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(30,30,36,0.5);
+}
+.wheel-hint-line {
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(184,146,70,0.3), transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 6 — CORNER APPLIANCE LINE-ART DECORATIONS
+   ═══════════════════════════════════════════════════════════════ */
+.corner-decor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.08;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 7 — GOLD SWEEP ANIMATION (shared for all buttons)
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes goldSweep {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 8 — RESPONSIVE FALLBACK
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 1400px) {
+  .page-frame { margin: 16px; padding: 32px 24px 28px; }
+  .main-layout { grid-template-columns: 240px 1fr 240px; gap: 24px; }
+  .wheel-container { width: 440px; height: 480px; }
+  .wheel-outer-ring { width: 370px; height: 370px; }
+  .wheel-inner-ring { width: 346px; height: 346px; }
+  .wheel-metal-highlight { width: 370px; height: 370px; }
+  .wheel-segments { width: 336px; height: 336px; }
+}
+@media (max-width: 1100px) {
+  .main-layout { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto; }
+  .wheel-stage { order: -1; }
+  .wheel-container { width: 380px; height: 420px; }
+  .wheel-outer-ring { width: 320px; height: 320px; }
+  .wheel-inner-ring { width: 300px; height: 300px; }
+  .wheel-metal-highlight { width: 320px; height: 320px; }
+  .wheel-segments { width: 290px; height: 290px; }
+  .segment-label { font-size: 11px; width: 64px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     GLOBAL BACKGROUND LAYERS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="global-bg"></div>
+<div class="ambient-glow-tl"></div>
+<div class="ambient-glow-br"></div>
+
+<!-- Corner appliance line-art decorations -->
+<div class="corner-decor" style="top:40px;left:40px;">
+  <svg width="120" height="120" viewBox="0 0 120 120"><rect x="10" y="10" width="60" height="38" rx="3" fill="none" stroke="#8b7355" stroke-width="1.5"/><rect x="15" y="15" width="50" height="28" rx="2" fill="none" stroke="#8b7355" stroke-width="1"/><circle cx="40" cy="75" r="14" fill="none" stroke="#8b7355" stroke-width="1.2"/><circle cx="40" cy="75" r="8" fill="none" stroke="#8b7355" stroke-width="1"/><path d="M62 90 L70 108 Q78 112 86 108 L94 90" fill="none" stroke="#8b7355" stroke-width="1"/></svg>
+</div>
+<div class="corner-decor" style="top:40px;right:40px;">
+  <svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="15" width="22" height="55" rx="5" fill="none" stroke="#8b7355" stroke-width="1.2"/><path d="M10 35 L0 22 L0 42" fill="none" stroke="#8b7355" stroke-width="1.2"/></svg>
+</div>
+<div class="corner-decor" style="bottom:40px;left:40px;">
+  <svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="10" width="18" height="60" rx="3" fill="none" stroke="#8b7355" stroke-width="1.2"/><circle cx="19" cy="20" r="3" fill="none" stroke="#8b7355" stroke-width="1"/><circle cx="19" cy="38" r="3" fill="none" stroke="#8b7355" stroke-width="1"/><circle cx="19" cy="56" r="3" fill="none" stroke="#8b7355" stroke-width="1"/></svg>
+</div>
+<div class="corner-decor" style="bottom:40px;right:40px;">
+  <svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="10" width="28" height="45" rx="4" fill="none" stroke="#8b7355" stroke-width="1.2"/><rect x="16" y="16" width="16" height="24" rx="2" fill="none" stroke="#8b7355" stroke-width="1"/></svg>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PAGE FRAME — Outer gold-bordered floating display
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="page-frame">
+
+  <!-- ── TOP NAV ── -->
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <span>SKYWORTH</span>
+      <span class="nav-brand-dot"></span>
+    </div>
+    <div class="nav-links">
+      <button class="nav-link">Learning</button>
+      <button class="nav-link active">Lucky Draw</button>
+      <button class="nav-link">Rewards Mall</button>
+      <button class="nav-link">Sales Records</button>
+      <button class="nav-link">Admin</button>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MAIN THREE-COLUMN LAYOUT
+       ═══════════════════════════════════════════════════════════════ -->
+  <div class="main-layout">
+
+    <!-- ══════════════════════════════════════════════════════════
+         LEFT CARD — AVAILABLE CHANCES
+         ══════════════════════════════════════════════════════════ -->
+    <aside class="side-card">
+      <div class="side-card-inner">
+        <!-- Trophy icon + title -->
+        <div class="card-header-area">
+          <!-- Gold trophy SVG -->
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#b89246" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/>
+            <path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/>
+            <path d="M6 3h12v6a6 6 0 0 1-12 0V3z"/>
+            <path d="M9 21h6"/>
+            <path d="M12 15v6"/>
+          </svg>
+          <div class="card-divider"></div>
+          <span class="card-title">Available Chances</span>
+        </div>
+
+        <!-- Big number with glow + dot texture -->
+        <div class="big-number-wrap">
+          <div class="big-number-glow"></div>
+          <div class="big-number-dots"></div>
+          <span class="big-number">0</span>
+        </div>
+        <span style="font-size:12px;font-weight:500;color:#94a3b8;margin-top:-8px;">Chances Left</span>
+
+        <!-- My History button with gift icons -->
+        <button class="card-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <path d="M12 4v16"/><path d="M3 10h18"/>
+          </svg>
+          My History
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <path d="M12 4v16"/><path d="M3 10h18"/>
+          </svg>
+        </button>
+      </div>
+      <!-- Brand watermark -->
+      <span class="brand-watermark">SKYWORTH</span>
+    </aside>
+
+    <!-- ══════════════════════════════════════════════════════════
+         CENTER — WHEEL STAGE
+         ══════════════════════════════════════════════════════════ -->
+    <section class="wheel-stage">
+
+      <!-- Wheel container: holds background decor + wheel -->
+      <div class="wheel-container">
+
+        <!-- ── COIN RAIN LAYER (z-index: 0, below all segments) ── -->
+        <div class="coin-rain-layer">
+          <!-- 10 falling gold coins -->
+          <div class="coin"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#d4a850" stroke="#8b6914" stroke-width="2"/><circle cx="20" cy="20" r="14" fill="none" stroke="#f0d78c" stroke-width="0.8"/><text x="20" y="25" text-anchor="middle" fill="#8b6914" font-size="12" font-weight="900">¥</text></svg></div>
+          <div class="coin"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#e8d5a3" stroke="#b89246" stroke-width="2"/><circle cx="20" cy="20" r="14" fill="none" stroke="#f0d78c" stroke-width="0.8"/><text x="20" y="25" text-anchor="middle" fill="#8b6914" font-size="12" font-weight="900">¥</text></svg></div>
+          <div class="coin"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#c9a042" stroke="#8b6914" stroke-width="2"/><circle cx="20" cy="20" r="14" fill="none" stroke="#e8d5a3" stroke-width="0.8"/><text x="20" y="25" text-anchor="middle" fill="#6b4f10" font-size="12" font-weight="900">¥</text></svg></div>
+          <div class="coin"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#d4a850" stroke="#8b6914" stroke-width="2"/><circle cx="20" cy="20" r="14" fill="none" stroke="#f0d78c" stroke-width="0.8"/><text x="20" y="25" text-anchor="middle" fill="#8b6914" font-size="12" font-weight="900">¥</text></svg></div>
+          <div class="coin"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#e8d5a3" stroke="#b89246" stroke-width="2"/><circle cx="20" cy="20" r="14" fill="none" stroke="#f0d78c" stroke-width="0.8"/><text x="20" y="25" text-anchor="middle" fill="#8b6914" font-size="12" font-weight="900">¥</text></svg></div>
+          <div class="coin"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#c9a042" stroke="#8b6914" stroke-width="2"/><circle cx="20" cy="20" r="14" fill="none" stroke="#e8d5a3" stroke-width="0.8"/><text x="20" y="25" text-anchor="middle" fill="#6b4f10" font-size="12" font-weight="900">¥</text></svg></div>
+          <div class="coin"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#d4a850" stroke="#8b6914" stroke-width="2"/><circle cx="20" cy="20" r="14" fill="none" stroke="#f0d78c" stroke-width="0.8"/><text x="20" y="25" text-anchor="middle" fill="#8b6914" font-size="12" font-weight="900">¥</text></svg></div>
+          <div class="coin"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#e8d5a3" stroke="#b89246" stroke-width="2"/><circle cx="20" cy="20" r="14" fill="none" stroke="#f0d78c" stroke-width="0.8"/><text x="20" y="25" text-anchor="middle" fill="#8b6914" font-size="12" font-weight="900">¥</text></svg></div>
+          <div class="coin"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#d4a850" stroke="#8b6914" stroke-width="2"/><circle cx="20" cy="20" r="14" fill="none" stroke="#f0d78c" stroke-width="0.8"/><text x="20" y="25" text-anchor="middle" fill="#8b6914" font-size="12" font-weight="900">¥</text></svg></div>
+          <div class="coin"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#c9a042" stroke="#8b6914" stroke-width="2"/><circle cx="20" cy="20" r="14" fill="none" stroke="#e8d5a3" stroke-width="0.8"/><text x="20" y="25" text-anchor="middle" fill="#6b4f10" font-size="12" font-weight="900">¥</text></svg></div>
+        </div>
+
+        <!-- ── Q-STYLE CATCHER CHARACTER (z-index: 0) ── -->
+        <div class="coin-catcher">
+          <svg width="80" height="90" viewBox="0 0 80 90">
+            <!-- Body -->
+            <ellipse cx="40" cy="68" rx="18" ry="20" fill="#5c88d8" stroke="#3c67c2" stroke-width="1.5"/>
+            <!-- Head -->
+            <circle cx="40" cy="38" r="16" fill="#f5d5b8" stroke="#d4a850" stroke-width="1.5"/>
+            <!-- Eyes -->
+            <circle cx="34" cy="35" r="3" fill="#1a1a2e"/>
+            <circle cx="46" cy="35" r="3" fill="#1a1a2e"/>
+            <circle cx="35" cy="34" r="1" fill="white"/>
+            <circle cx="47" cy="34" r="1" fill="white"/>
+            <!-- Smile -->
+            <path d="M35 44 Q40 49 45 44" fill="none" stroke="#1a1a2e" stroke-width="1.5" stroke-linecap="round"/>
+            <!-- Arms reaching up -->
+            <path d="M22 55 Q12 38 18 28" fill="none" stroke="#f5d5b8" stroke-width="6" stroke-linecap="round"/>
+            <path d="M58 55 Q68 38 62 28" fill="none" stroke="#f5d5b8" stroke-width="6" stroke-linecap="round"/>
+            <!-- Hands -->
+            <circle cx="18" cy="26" r="5" fill="#f5d5b8"/>
+            <circle cx="62" cy="26" r="5" fill="#f5d5b8"/>
+            <!-- Legs -->
+            <rect x="28" y="82" width="10" height="8" rx="4" fill="#3c67c2"/>
+            <rect x="42" y="82" width="10" height="8" rx="4" fill="#3c67c2"/>
+            <!-- Coins near hands/feet -->
+            <circle cx="12" cy="22" r="6" fill="#d4a850" stroke="#8b6914" stroke-width="1.5"/>
+            <text x="12" y="25" text-anchor="middle" fill="#8b6914" font-size="8" font-weight="900">¥</text>
+            <circle cx="68" cy="22" r="5" fill="#e8d5a3" stroke="#b89246" stroke-width="1.5"/>
+            <text x="68" y="25" text-anchor="middle" fill="#8b6914" font-size="7" font-weight="900">¥</text>
+            <circle cx="38" cy="6" r="4" fill="#c9a042" stroke="#8b6914" stroke-width="1.2"/>
+            <circle cx="48" cy="10" r="5" fill="#d4a850" stroke="#8b6914" stroke-width="1.5"/>
+            <!-- Coins at feet -->
+            <circle cx="20" cy="82" r="5" fill="#d4a850" stroke="#8b6914" stroke-width="1.2"/>
+            <circle cx="60" cy="84" r="4" fill="#e8d5a3" stroke="#b89246" stroke-width="1"/>
+          </svg>
+        </div>
+
+        <!-- ── OUTER DOUBLE METAL RING ── -->
+        <div class="wheel-outer-ring"></div>
+        <div class="wheel-inner-ring"></div>
+        <div class="wheel-metal-highlight"></div>
+
+        <!-- ── WHEEL SEGMENTS (10 sectors via conic-gradient, z-index: 5) ── -->
+        <div class="wheel-segments">
+          <!-- 10 text labels positioned on top of conic-gradient background -->
+          <span class="segment-label seg-label-0">50,000<br>Points</span>
+          <span class="segment-label seg-label-1">QLED TV</span>
+          <span class="segment-label seg-label-2">Missed</span>
+          <span class="segment-label seg-label-3">Hand Fan</span>
+          <span class="segment-label seg-label-4">Electric<br>Toothbrush</span>
+          <span class="segment-label seg-label-5">Electric<br>Shaver</span>
+          <span class="segment-label seg-label-6">Bluetooth<br>Earbuds</span>
+          <span class="segment-label seg-label-7">Green Bag</span>
+          <span class="segment-label seg-label-8">20,000<br>Points</span>
+          <span class="segment-label seg-label-9">50,000<br>Points</span>
+        </div>
+
+        <!-- ── LOCKED CENTER HUB ── -->
+        <div class="wheel-center-hub">
+          <div class="hub-ring-outer">
+            <div class="hub-ring-mid">
+              <div class="hub-ring-inner">
+                <span class="hub-text">LOCKED</span>
+              </div>
+            </div>
+          </div>
+          <!-- 4 rivets -->
+          <div class="hub-rivet"></div>
+          <div class="hub-rivet"></div>
+          <div class="hub-rivet"></div>
+          <div class="hub-rivet"></div>
+        </div>
+
+        <!-- ── TOP POINTER ── -->
+        <div class="wheel-pointer">
+          <svg width="44" height="50" viewBox="0 0 44 50">
+            <!-- Shadow triangle -->
+            <polygon points="22,44 5,6 39,6" fill="rgba(0,0,0,0.15)" transform="translate(0,2)"/>
+            <!-- Outer solid gold -->
+            <polygon points="22,44 5,6 39,6" fill="#c9a042"/>
+            <!-- Inner highlight overlay -->
+            <polygon points="22,40 9,8 35,8" fill="#e8d5a3" opacity="0.6"/>
+            <!-- Center ridge line -->
+            <line x1="22" y1="40" x2="22" y2="10" stroke="#f0d78c" stroke-width="1" opacity="0.8"/>
+          </svg>
+        </div>
+        <!-- Pointer pendant glow dot -->
+        <div class="pointer-pendant"></div>
+        <!-- Pointer ribbons -->
+        <div class="pointer-ribbon-l"></div>
+        <div class="pointer-ribbon-r"></div>
+
+      </div><!-- /wheel-container -->
+
+      <!-- ── PEDESTAL BASE ── -->
+      <div class="wheel-pedestal">
+        <div class="pedestal-arc"></div>
+      </div>
+
+      <!-- ── LOCK HINT TEXT ── -->
+      <div class="wheel-hint-area">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b89246" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span class="wheel-hint-text">Submit sales record to unlock.</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b89246" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <div class="wheel-hint-line" style="width:80px;margin:6px auto 0;"></div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         RIGHT CARD — WEEKLY'S WINNERS
+         ══════════════════════════════════════════════════════════ -->
+    <aside class="side-card">
+      <div class="side-card-inner">
+        <!-- Champion medal icon + title -->
+        <div class="card-header-area">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#b89246" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="9" r="7"/>
+            <path d="M9 16l-4 5h14l-4-5"/>
+            <path d="M12 2v3"/>
+          </svg>
+          <div class="card-divider"></div>
+          <span class="card-title">Weekly's Winners</span>
+        </div>
+
+        <!-- Empty state with gift illustration -->
+        <div class="winners-list-area">
+          <div class="winners-empty">
+            <!-- Semi-transparent gift box illustration -->
+            <svg class="winners-empty-gift" width="80" height="80" viewBox="0 0 80 80">
+              <rect x="15" y="30" width="50" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
+              <path d="M15 30 L40 18 L65 30" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
+              <path d="M40 18 L40 70" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
+              <path d="M28 18 Q28 8 40 18 Q52 8 52 18" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
+              <rect x="30" y="42" width="20" height="18" rx="2" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+              <line x1="40" y1="42" x2="40" y2="60" stroke="#94a3b8" stroke-width="1.2"/>
+            </svg>
+            <span class="winners-empty-text">No winners this week yet</span>
+          </div>
+        </div>
+
+        <!-- View All Winners button with ranking icons -->
+        <button class="card-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="6" width="6" height="14" rx="1"/><rect x="9" y="10" width="6" height="10" rx="1"/><rect x="16" y="2" width="6" height="18" rx="1"/>
+          </svg>
+          View All Winners
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="6" width="6" height="14" rx="1"/><rect x="9" y="10" width="6" height="10" rx="1"/><rect x="16" y="2" width="6" height="18" rx="1"/>
+          </svg>
+        </button>
+      </div>
+      <!-- Star decorations bottom-left -->
+      <div class="card-stars">
+        <svg width="8" height="8" viewBox="0 0 10 10"><polygon points="5,0 6.5,3.5 10,5 6.5,6.5 5,10 3.5,6.5 0,5 3.5,3.5" fill="#d4a850" opacity="0.4"/></svg>
+        <svg width="6" height="6" viewBox="0 0 10 10"><polygon points="5,0 6.5,3.5 10,5 6.5,6.5 5,10 3.5,6.5 0,5 3.5,3.5" fill="#b89246" opacity="0.25"/></svg>
+        <svg width="7" height="7" viewBox="0 0 10 10"><polygon points="5,0 6.5,3.5 10,5 6.5,6.5 5,10 3.5,6.5 0,5 3.5,3.5" fill="#d4a850" opacity="0.35"/></svg>
+      </div>
+    </aside>
+
+  </div><!-- /main-layout -->
+</div><!-- /page-frame -->
+
+</body>
+</html>
