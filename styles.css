@@ -4274,6 +4274,72 @@ body.intro-playing {
   flex-shrink: 0;
 }
 
+/* Model grid responsive: reduce columns and font on mobile */
+@media (max-width: 760px) {
+  .draw-model-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .draw-model-option {
+    font-size: 12px;
+    padding: 8px 10px;
+    min-height: 40px;
+    border-radius: 10px;
+  }
+  .draw-model-option input {
+    width: 14px;
+    height: 14px;
+  }
+  .draw-step {
+    gap: 10px;
+  }
+  .draw-step-number {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+  .draw-step-body {
+    gap: 8px;
+  }
+  .draw-step-label {
+    font-size: 13px;
+  }
+  .draw-upload-placeholder {
+    padding: 20px 14px;
+    gap: 6px;
+  }
+  .draw-upload-placeholder span {
+    font-size: 12px;
+  }
+  .draw-upload-placeholder svg {
+    width: 24px;
+    height: 24px;
+  }
+  .draw-submit-btn {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 20px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 400px) {
+  .draw-model-grid {
+    grid-template-columns: 1fr;
+  }
+  .draw-model-option {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+  .draw-upload-placeholder {
+    padding: 16px 10px;
+  }
+  .draw-upload-placeholder span {
+    font-size: 11px;
+  }
+}
+
 /* Upload Area */
 .draw-upload-area {
   position: relative;
