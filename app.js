@@ -489,7 +489,7 @@ function dataUrlToBlob(dataUrl) {
   return new Blob([bytes], { type: mime });
 }
 
-// MAX_UPLOAD_BYTES: 上传数据上限 500KB（base64 膨胀后约 667KB，远低于数据库写入限制）
+// MAX_UPLOAD_BYTES: max decoded image size 500KB (~667KB in base64, well below DB write limits)
 const MAX_UPLOAD_BYTES = 500 * 1024;
 
 async function compressImage(file, maxWidth, quality) {
@@ -514,13 +514,13 @@ async function compressImage(file, maxWidth, quality) {
   });
 }
 
-// 循环压缩直到图片低于目标大小，或质量已降至最低
+// Loop compress until image is under target size, or quality reaches minimum
 async function compressToTarget(file, targetBytes, maxWidth) {
   let blob = file;
   let quality = 0.8;
-  // 先做一次尺寸压缩
+  // First: resize to target width
   try { blob = await compressImage(blob, maxWidth, quality); } catch (_) {}
-  // 如果还超过目标大小，逐步降低质量
+  // If still too large, progressively lower quality
   while (blob.size > targetBytes && quality > 0.15) {
     quality = Math.max(0.15, quality - 0.15);
     try { blob = await compressImage(blob, maxWidth, quality); } catch (_) { break; }
@@ -546,11 +546,11 @@ async function uploadToStorage(base64Data, fileName) {
 
 async function fileToStoredFile(file) {
   if (!file) return null;
-  // 图片类型处理上传+压缩；PDF 等非图片文件直接存 dataUrl（不压缩）
+  // Image files: upload + compress; non-image files (e.g. PDF): upload as-is
   if (file.type && file.type.startsWith("image/")) {
     return await imageToStoredFile(file);
   }
-  // 非图片文件（如 PDF）：直接转 base64 上传，不做压缩
+  // Non-image files (e.g. PDF): convert to base64, upload without compression
   try {
     const dataUrl = await blobToDataUrl(file);
     const uploadedUrl = await uploadToStorage(dataUrl, file.name);
@@ -565,18 +565,18 @@ async function fileToStoredFile(file) {
 }
 
 async function imageToStoredFile(file) {
-  // 前端大小校验：超过 10MB 直接拒绝
+  // Client-side size check: reject files over 10MB
   if (file.size > 10 * 1024 * 1024) {
     throw new Error("Image is too large. Please select an image under 10 MB.");
   }
   let processedFile = file;
-  // 压缩：大于 300KB 或宽度超过 1920px 的图片都进行压缩
+  // Compress images larger than 300KB
   if (file.size > 300 * 1024) {
     try {
       processedFile = await compressToTarget(file, MAX_UPLOAD_BYTES, 1600);
     } catch (e) { /* fall back to original */ }
   }
-  // 最终保底：如果处理后仍然超过上限，再次强压
+  // Final safeguard: if still over limit, compress harder
   if (processedFile.size > MAX_UPLOAD_BYTES) {
     try {
       processedFile = await compressToTarget(processedFile, MAX_UPLOAD_BYTES, 1024);
@@ -1896,6 +1896,7 @@ function revealAfterIntro() {
   }
   showAppShell(false);
   if (els.registrationGate) {
+    // Wait a frame so the registration gate layout is ready for the reveal animation
     window.requestAnimationFrame(() => {
       els.registrationGate.classList.add("is-revealed");
     });
@@ -2757,9 +2758,16 @@ async function saveSurvey(event) {
   const profile = requireProfile();
   if (!profile) return;
   const selectedModel = document.querySelector('input[name="surveyModel"]:checked');
+  const submitBtn = document.querySelector(".draw-submit-btn");
   try {
+    // Show submitting state
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
+    }
     const receipt = await fileToStoredFile($("#surveyReceipt").files[0]);
     if (!receipt) {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Submit Sales Record"; }
       alert("Failed to upload receipt. Please try again or select a different file.");
       return;
     }
@@ -2779,9 +2787,16 @@ async function saveSurvey(event) {
     isDrawActive = true;
     updateWheelState();
     els.surveyForm.reset();
+    // Reset upload placeholder
+    const placeholder = document.querySelector(".draw-upload-placeholder");
+    if (placeholder) {
+      placeholder.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Click to upload receipt image or PDF</span>`;
+    }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Submit Sales Record"; }
     await renderAdmin();
   } catch (e) {
     console.error("Survey submit error:", e);
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Submit Sales Record"; }
     alert("Submit failed: " + (e.message || "Unknown error. Please try again."));
   }
 }
@@ -3742,6 +3757,29 @@ async function restoreSession() {
   setStoredCurrentUserId(currentProfile.accountKey || currentProfile.id);
   showAppShell(true);
   await refreshLearnerSummary();
+  // Restore Lucky Draw state: check if user already submitted today
+  await restoreDrawState();
+}
+
+async function restoreDrawState() {
+  try {
+    const surveys = await getAll("surveys");
+    const today = new Date().toISOString().slice(0, 10);
+    const todaysSurvey = surveys.find(
+      (s) => s.userId === currentProfile.id && s.createdAt && s.createdAt.startsWith(today)
+    );
+    if (todaysSurvey && !todaysSurvey.prize) {
+      // User submitted today but hasn't spun yet
+      currentSurveyId = todaysSurvey.id;
+      isDrawActive = true;
+    } else if (todaysSurvey && todaysSurvey.prize) {
+      // User already spun today — keep locked
+      currentSurveyId = null;
+      isDrawActive = false;
+    }
+  } catch (e) {
+    console.warn("Could not restore draw state:", e);
+  }
 }
 
 function startUserSwitch() {
@@ -3909,7 +3947,7 @@ function handleQuestionBuilderClick(event) {
 if (els.adminLoginForm) els.adminLoginForm.addEventListener("submit", handleAdminLogin);
 els.courseForm.addEventListener("submit", saveCourse);
 els.surveyForm.addEventListener("submit", saveSurvey);
-// Lucky Draw 选文件后显示预览
+// Show file preview after selection in Lucky Draw
 const surveyReceiptInput = document.getElementById("surveyReceipt");
 if (surveyReceiptInput) {
   surveyReceiptInput.addEventListener("change", () => {
@@ -4011,6 +4049,11 @@ if (els.salesCameraImage) {
 initCarouselArrows();
 initLearningNavLinks();
 
+// Start intro animation immediately — do not wait for DB
+if (new URLSearchParams(window.location.search).get("demo") !== "draw") {
+  startIntroFlow();
+}
+
 openDb()
   .then(async (opened) => {
     db = opened;
@@ -4027,9 +4070,6 @@ openDb()
     await restoreSession();
     await renderAll();
     await applyDemoViewIfRequested();
-    if (new URLSearchParams(window.location.search).get("demo") !== "draw") {
-      startIntroFlow();
-    }
   })
   .catch((error) => {
     console.error(error);

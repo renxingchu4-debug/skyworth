@@ -334,7 +334,7 @@ async function handleApi(req, res, url) {
   }
 
   // ── Image upload ──
-  // 限制：base64 解码后最大 500KB（base64 字符串约 667KB）
+  // Limit: max 500KB after base64 decode (~667KB base64 string)
   const MAX_IMAGE_BYTES = 500 * 1024;
   if (url.pathname === "/api/upload" && req.method === "POST") {
     if (!useSupabase || !supabase) {
@@ -347,7 +347,7 @@ async function handleApi(req, res, url) {
         sendJson(res, 400, { error: "No image data provided." });
         return true;
       }
-      // 服务端大小校验：解码后检查实际图片大小
+      // Server-side size check: validate decoded image size
       const matches = image.match(/^data:(.+);base64,(.+)$/);
       let decodedSize = 0;
       if (matches) {
