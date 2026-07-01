@@ -93,6 +93,7 @@ let useLocalStore = !("indexedDB" in window);
 let introComplete = false;
 const isDemoDrawRequest = new URLSearchParams(window.location.search).get("demo") === "draw";
 let useServerStore = false;
+let supabaseConnected = false; // true when server is using Supabase
 const memoryStorage = new Map();
 
 function safeStorageGet(key) {
@@ -262,9 +263,11 @@ async function openServerStore() {
     if (!response.ok) return false;
     const payload = await response.json();
     useServerStore = Boolean(payload?.persisted);
+    supabaseConnected = Boolean(payload?.supabaseConnected);
     return useServerStore;
   } catch (error) {
     useServerStore = false;
+    supabaseConnected = false;
     return false;
   }
 }
@@ -486,26 +489,123 @@ function dataUrlToBlob(dataUrl) {
   return new Blob([bytes], { type: mime });
 }
 
+// MAX_UPLOAD_BYTES: 上传数据上限 500KB（base64 膨胀后约 667KB，远低于数据库写入限制）
+const MAX_UPLOAD_BYTES = 500 * 1024;
+
+async function compressImage(file, maxWidth, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const w = Math.min(img.width, maxWidth);
+      const h = Math.round(img.height * (w / img.width));
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => {
+        if (blob && blob.size < file.size) resolve(blob);
+        else resolve(file);
+      }, file.type || "image/jpeg", quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
+// 循环压缩直到图片低于目标大小，或质量已降至最低
+async function compressToTarget(file, targetBytes, maxWidth) {
+  let blob = file;
+  let quality = 0.8;
+  // 先做一次尺寸压缩
+  try { blob = await compressImage(blob, maxWidth, quality); } catch (_) {}
+  // 如果还超过目标大小，逐步降低质量
+  while (blob.size > targetBytes && quality > 0.15) {
+    quality = Math.max(0.15, quality - 0.15);
+    try { blob = await compressImage(blob, maxWidth, quality); } catch (_) { break; }
+  }
+  return blob;
+}
+
+async function uploadToStorage(base64Data, fileName) {
+  try {
+    const resp = await fetch("/api/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: base64Data, fileName })
+    });
+    const result = await resp.json();
+    if (!resp.ok) throw new Error(result.error || "Upload failed");
+    return result.url;
+  } catch (e) {
+    console.warn("Upload to storage failed, falling back to base64:", e.message);
+    return null;
+  }
+}
+
 async function fileToStoredFile(file) {
   if (!file) return null;
-  const dataUrl = await blobToDataUrl(file);
+  // 仅接受图片类型
+  if (!file.type || !file.type.startsWith("image/")) {
+    throw new Error("Only image files are allowed.");
+  }
+  // 前端大小校验：超过 10MB 直接拒绝
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error("Image is too large. Please select an image under 10 MB.");
+  }
+  let processedFile = file;
+  // 压缩：大于 300KB 或宽度超过 1920px 的图片都进行压缩
+  if (file.size > 300 * 1024) {
+    try {
+      processedFile = await compressToTarget(file, MAX_UPLOAD_BYTES, 1600);
+    } catch (e) { /* fall back to original */ }
+  }
+  // 最终保底：如果处理后仍然超过上限，再次强压
+  if (processedFile.size > MAX_UPLOAD_BYTES) {
+    try {
+      processedFile = await compressToTarget(processedFile, MAX_UPLOAD_BYTES, 1024);
+    } catch (e) { /* keep current */ }
+  }
+  const dataUrl = await blobToDataUrl(processedFile);
+  // Try uploading to Supabase Storage
+  const uploadedUrl = await uploadToStorage(dataUrl, file.name);
+  if (uploadedUrl) {
+    return {
+      name: file.name,
+      type: file.type || "application/octet-stream",
+      size: processedFile.size,
+      url: uploadedUrl
+    };
+  }
+  // Fallback: store as dataUrl only (no duplicate in url field)
   return {
     name: file.name,
     type: file.type || "application/octet-stream",
-    size: file.size,
-    dataUrl,
-    blob: useLocalStore ? null : file
+    size: processedFile.size,
+    dataUrl
   };
 }
 
 function fileUrl(storedFile) {
   if (!storedFile) return "";
+  if (storedFile.url) return storedFile.url;
   if (storedFile.dataUrl) return storedFile.dataUrl;
   return storedFile.blob ? URL.createObjectURL(storedFile.blob) : "";
 }
 
 function restoreStoredFile(storedFile) {
   if (!storedFile) return null;
+  // New format with url
+  if (storedFile.url) {
+    return {
+      name: storedFile.name || "file",
+      type: storedFile.type || "image/jpeg",
+      size: storedFile.size || 0,
+      url: storedFile.url
+    };
+  }
+  // Legacy format with dataUrl/blob
   const blob = storedFile.blob || (storedFile.dataUrl ? dataUrlToBlob(storedFile.dataUrl) : null);
   if (!blob) return null;
   return {
@@ -541,6 +641,10 @@ async function serializeBackupValue(value) {
     };
   }
   if (typeof value === "object") {
+    // New format: image with url from Supabase Storage
+    if (value.url && value.name && !value.blob && !value.dataUrl) {
+      return { name: value.name, type: value.type || "image/jpeg", size: value.size || 0, url: value.url };
+    }
     if (value.blob instanceof Blob || value.dataUrl) {
       const dataUrl = value.dataUrl || await blobToDataUrl(value.blob);
       return {
@@ -561,6 +665,10 @@ function reviveBackupValue(value) {
   if (value == null) return value;
   if (Array.isArray(value)) return value.map(reviveBackupValue);
   if (typeof value === "object") {
+    // New format: image with url from Supabase Storage
+    if (value.url && value.name && !value.blob && !value.dataUrl && !value.__storedBlob) {
+      return { name: value.name, type: value.type || "image/jpeg", size: value.size || 0, url: value.url };
+    }
     if (value.__storedBlob && value.dataUrl) {
       return {
         name: value.name || "file",
@@ -3874,7 +3982,7 @@ openDb()
     await migrateLocalFallbackToIndexedDb();
     dbReady = true;
     initProvinceSelect();
-    setRegistrationStatus(useServerStore ? "Registration is ready. Uploads save on this server." : useLocalStore ? "Registration is ready in local file mode." : "Registration is ready.", "success");
+    setRegistrationStatus(supabaseConnected ? "Registration is ready. Data is saved to cloud database." : useServerStore ? "Registration is ready. Uploads save on this server." : useLocalStore ? "Registration is ready in local file mode." : "Registration is ready.", "success");
     resetQuestionDrafts();
     addQuestionDraft("single");
     restoreCourseDraft();
