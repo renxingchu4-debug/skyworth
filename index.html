@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=wheel-fixes" />
+    <link rel="stylesheet" href="./styles.css?v=toast-speed" />
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   </head>
   <body>
@@ -306,7 +306,7 @@
                       <span>Click to upload receipt image or PDF</span>
                     </div>
                   </div>
-                  <p class="draw-receipt-warning">Do not submit duplicate receipts. Prizes won from duplicate submissions will be revoked.</p>
+                  <p class="draw-receipt-warning"><span class="draw-receipt-warning-icon">⚠️</span> Do not submit duplicate receipts. Prizes won from duplicate submissions will be revoked.</p>
                 </div>
               </div>
 
@@ -990,7 +990,7 @@
           window.forceDemoDrawView();
         }
       </script>
-      <script src="./app.js?v=wheel-fixes"></script>
+      <script src="./app.js?v=toast-speed"></script>
       <script>
         if (window.forceDemoDrawView) {
           window.setTimeout(window.forceDemoDrawView, 250);

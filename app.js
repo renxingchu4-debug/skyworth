@@ -78,6 +78,7 @@ let db;
 let currentSurveyId = null;
 let spinning = false;
 let wheelAngle = 0;
+let _cachedSurveys = null; // cache for faster spin/side-button response
 let adminAuthenticated = false;
 let isDrawActive = false;
 let currentProfile = null;
@@ -731,6 +732,8 @@ function showView(viewId) {
   if (viewId === "learn") renderCourses();
   if (viewId === "mall") renderMall();
   if (viewId === "survey") {
+    // Pre-fetch surveys cache for faster spin/side-button response
+    getAll("surveys").then(s => { _cachedSurveys = s; }).catch(() => {});
     renderPrizeWheel();
     updateWheelState();
     renderAdmin(); // This will update the lottery insights too
@@ -2804,6 +2807,8 @@ async function saveSurvey(event) {
       placeholder.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Click to upload receipt image or PDF</span>`;
     }
     if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Submit Sales Record"; }
+    _cachedSurveys = null; // invalidate cache after new submission
+    showToast("Submitted! 🎉 Click <strong>SPIN</strong> to draw your prize!", "success");
     await renderAdmin();
   } catch (e) {
     console.error("Survey submit error:", e);
@@ -2885,7 +2890,7 @@ async function updateWeeklyWinnersCard() {
     const surveys = await getAll("surveys");
 
     const winners = surveys
-      .filter(s => s.prize && s.prizeAt)
+      .filter(s => s.prize && s.prizeAt && s.prize !== "Missed")
       .sort((a, b) => new Date(b.prizeAt) - new Date(a.prizeAt))
       .slice(0, 8);
 
@@ -2935,7 +2940,8 @@ function drawWheel(rotation = wheelAngle) {
 }
 
 async function pickPrizeIndex() {
-  const surveys = await getAll("surveys");
+  // Use cache if available for instant response, otherwise fetch
+  const surveys = _cachedSurveys || await getAll("surveys");
   const used = surveys.reduce((totals, item) => {
     if (item.prize) totals[item.prize] = (totals[item.prize] || 0) + 1;
     return totals;
@@ -4327,7 +4333,7 @@ els.spinButton.addEventListener("click", spinWheel);
 const myHistoryBtn = document.getElementById("myHistoryBtn");
 if (myHistoryBtn) {
   myHistoryBtn.addEventListener("click", async () => {
-    const surveys = await getAll("surveys");
+    const surveys = _cachedSurveys || await getAll("surveys");
     const profile = currentProfile;
     const userWins = surveys
       .filter(s => s.prize && s.name === (profile ? profile.name : ""))
@@ -4346,7 +4352,7 @@ if (myHistoryBtn) {
 const viewAllBtn = document.getElementById("viewAllWinnersBtn");
 if (viewAllBtn) {
   viewAllBtn.addEventListener("click", async () => {
-    const surveys = await getAll("surveys");
+    const surveys = _cachedSurveys || await getAll("surveys");
     const allWins = surveys
       .filter(s => s.prize)
       .sort((a, b) => new Date(b.prizeAt) - new Date(a.prizeAt));
@@ -4381,6 +4387,21 @@ function showInfoModal(title, content, isHtml) {
   const close = () => overlay.remove();
   overlay.querySelector(".info-modal-close").addEventListener("click", close);
   overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+}
+
+// Toast notification
+function showToast(message, type) {
+  const existing = document.querySelector(".toast-bar");
+  if (existing) existing.remove();
+  const toast = document.createElement("div");
+  toast.className = "toast-bar " + (type || "");
+  toast.innerHTML = message;
+  document.body.append(toast);
+  requestAnimationFrame(() => toast.classList.add("toast-bar--show"));
+  setTimeout(() => {
+    toast.classList.remove("toast-bar--show");
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
 }
 els.exportButton.addEventListener("click", exportCsv);
 if (els.exportLearningBtn) els.exportLearningBtn.addEventListener("click", exportLearning);
