@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=datapanel-top" />
+    <link rel="stylesheet" href="./styles.css?v=dashboards" />
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   </head>
   <body>
@@ -750,6 +750,56 @@
             <div id="salesRecordTable" class="table-wrap"></div>
           </section>
         </div>
+        <!-- ═══ Dashboard 1: Today's Active Users ═══ -->
+        <section class="panel dashboard-panel">
+          <div class="data-panel-header">
+            <h3>Today's Active Users</h3>
+            <span class="dashboard-date" id="dashboardTodayDate"></span>
+          </div>
+          <div class="dashboard-kpi-row" id="dashActiveKpiRow"></div>
+          <div class="dashboard-detail-grid">
+            <div class="dashboard-detail-col">
+              <h4>By Province</h4>
+              <div id="dashProvinceBreakdown" class="dashboard-list"></div>
+            </div>
+            <div class="dashboard-detail-col">
+              <h4>By Store</h4>
+              <div id="dashStoreBreakdown" class="dashboard-list"></div>
+            </div>
+          </div>
+        </section>
+        <!-- ═══ Dashboard 2: Lucky Draw Prize Dispatch ═══ -->
+        <section class="panel dashboard-panel">
+          <div class="data-panel-header">
+            <h3>Lucky Draw — Prize Dispatch</h3>
+          </div>
+          <div id="dashDrawDispatchTable" class="table-wrap"></div>
+        </section>
+        <!-- ═══ Dashboard 3: Points Mall Redemption Dispatch ═══ -->
+        <section class="panel dashboard-panel">
+          <div class="data-panel-header">
+            <h3>Points Mall — Redemption Dispatch</h3>
+          </div>
+          <div id="dashRedemptionDispatchTable" class="table-wrap"></div>
+        </section>
+        <!-- ═══ Dashboard 4: Today's Sales Dashboard ═══ -->
+        <section class="panel dashboard-panel">
+          <div class="data-panel-header">
+            <h3>Today's Sales Dashboard</h3>
+            <span class="dashboard-date" id="dashboardSalesDate"></span>
+          </div>
+          <div class="dashboard-kpi-row" id="dashSalesKpiRow"></div>
+          <div class="dashboard-detail-grid">
+            <div class="dashboard-detail-col">
+              <h4>By Model</h4>
+              <div id="dashModelBreakdown" class="dashboard-list"></div>
+            </div>
+            <div class="dashboard-detail-col">
+              <h4>By Province → Store</h4>
+              <div id="dashProvinceStoreSales" class="dashboard-list"></div>
+            </div>
+          </div>
+        </section>
         <!-- ═══ Other data panels ═══ -->
         <div class="data-grid">
           <section class="panel">
@@ -939,7 +989,7 @@
           window.forceDemoDrawView();
         }
       </script>
-      <script src="./app.js?v=datapanel-top"></script>
+      <script src="./app.js?v=dashboards"></script>
       <script>
         if (window.forceDemoDrawView) {
           window.setTimeout(window.forceDemoDrawView, 250);

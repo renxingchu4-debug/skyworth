@@ -3532,6 +3532,209 @@ async function renderAdmin() {
   renderMallManager(restoredMallItems);
   renderLotteryInsights(surveys);
   refreshStorageStats();
+  renderDashboards(users, surveys, learningRecords, redemptions, salesRecords);
+}
+
+// ── Dispatch status storage ──
+const DISPATCH_KEY = "skyworth_dispatch_status";
+function loadDispatchStatus() {
+  try {
+    const raw = localStorage.getItem(DISPATCH_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+function saveDispatchStatus(status) {
+  localStorage.setItem(DISPATCH_KEY, JSON.stringify(status));
+}
+
+function getTodayRange() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+  return { start, end };
+}
+
+function renderDashboards(users, surveys, learningRecords, redemptions, salesRecords) {
+  const today = getTodayRange();
+  const todayStr = new Date().toLocaleDateString("en-US", { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+
+  // ─── Dashboard 1: Today's Active Users ───
+  const todayActiveUsers = users.filter(u => u.updatedAt && u.updatedAt >= today.start && u.updatedAt < today.end);
+  const totalToday = todayActiveUsers.length;
+
+  // Province breakdown
+  const provinceMap = {};
+  todayActiveUsers.forEach(u => {
+    const p = u.province || "Unknown";
+    provinceMap[p] = (provinceMap[p] || 0) + 1;
+  });
+  const provinceEntries = Object.entries(provinceMap).sort((a, b) => b[1] - a[1]);
+
+  // Store breakdown
+  const storeMap = {};
+  todayActiveUsers.forEach(u => {
+    const s = u.store || "Unknown";
+    storeMap[s] = (storeMap[s] || 0) + 1;
+  });
+  const storeEntries = Object.entries(storeMap).sort((a, b) => b[1] - a[1]);
+
+  const dashDateEl = document.getElementById("dashboardTodayDate");
+  if (dashDateEl) dashDateEl.textContent = todayStr;
+
+  const kpiRow = document.getElementById("dashActiveKpiRow");
+  if (kpiRow) {
+    kpiRow.innerHTML = `
+      <div class="dash-kpi">
+        <span class="dash-kpi-value">${totalToday}</span>
+        <span class="dash-kpi-label">Active Today</span>
+      </div>
+      <div class="dash-kpi">
+        <span class="dash-kpi-value">${provinceEntries.length}</span>
+        <span class="dash-kpi-label">Provinces</span>
+      </div>
+      <div class="dash-kpi">
+        <span class="dash-kpi-value">${storeEntries.length}</span>
+        <span class="dash-kpi-label">Stores</span>
+      </div>
+    `;
+  }
+
+  const provEl = document.getElementById("dashProvinceBreakdown");
+  if (provEl) {
+    provEl.innerHTML = provinceEntries.length
+      ? provinceEntries.map(([name, count]) => `<div class="dash-bar-item"><span class="dash-bar-label">${escapeHtml(name)}</span><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round(count / Math.max(...provinceEntries.map(e => e[1]))) * 100}%"></div></div><span class="dash-bar-value">${count}</span></div>`).join("")
+      : `<div class="empty-state">No activity today</div>`;
+  }
+
+  const storeEl = document.getElementById("dashStoreBreakdown");
+  if (storeEl) {
+    storeEl.innerHTML = storeEntries.length
+      ? storeEntries.map(([name, count]) => `<div class="dash-bar-item"><span class="dash-bar-label">${escapeHtml(name)}</span><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round(count / Math.max(...storeEntries.map(e => e[1]))) * 100}%"></div></div><span class="dash-bar-value">${count}</span></div>`).join("")
+      : `<div class="empty-state">No activity today</div>`;
+  }
+
+  // ─── Dashboard 2: Lucky Draw Prize Dispatch ───
+  const dispatchStatus = loadDispatchStatus();
+  const giftWinners = surveys
+    .filter(s => isGiftPrize(s.prize))
+    .sort((a, b) => new Date(b.prizeAt || b.createdAt) - new Date(a.prizeAt || a.createdAt));
+
+  const drawDispatchEl = document.getElementById("dashDrawDispatchTable");
+  if (drawDispatchEl) {
+    if (!giftWinners.length) {
+      drawDispatchEl.innerHTML = `<div class="empty-state">No prize winners yet</div>`;
+    } else {
+      const rows = giftWinners.map(item => {
+        const key = `draw_${item.id}`;
+        const dispatched = dispatchStatus[key] === true;
+        return [
+          formatTime(item.prizeAt || item.createdAt),
+          escapeHtml(item.name || ""),
+          escapeHtml(item.province || ""),
+          escapeHtml(item.store || item.group || ""),
+          displayPrize(item.prize),
+          dispatched
+            ? `<span class="dispatch-badge dispatched">Dispatched</span>`
+            : `<span class="dispatch-badge pending">Pending</span>`,
+          `<button class="dispatch-toggle-btn" data-dispatch="${key}" data-state="${dispatched ? "1" : "0"}">${dispatched ? "Mark Pending" : "Mark Dispatched"}</button>`
+        ];
+      });
+      drawDispatchEl.innerHTML = table(["Time", "Name", "Province", "Store", "Prize", "Status", "Action"], rows, "");
+    }
+  }
+
+  // ─── Dashboard 3: Points Mall Redemption Dispatch ───
+  const redEl = document.getElementById("dashRedemptionDispatchTable");
+  if (redEl) {
+    if (!redemptions.length) {
+      redEl.innerHTML = `<div class="empty-state">No redemptions yet</div>`;
+    } else {
+      const sorted = [...redemptions].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const rows = sorted.map(item => {
+        const key = `redemption_${item.id}`;
+        const dispatched = dispatchStatus[key] === true;
+        return [
+          formatTime(item.createdAt),
+          escapeHtml(item.store || ""),
+          escapeHtml(item.userId || ""),
+          escapeHtml(item.itemName || ""),
+          dispatched
+            ? `<span class="dispatch-badge dispatched">Dispatched</span>`
+            : `<span class="dispatch-badge pending">Pending</span>`,
+          `<button class="dispatch-toggle-btn" data-dispatch="${key}" data-state="${dispatched ? "1" : "0"}">${dispatched ? "Mark Pending" : "Mark Dispatched"}</button>`
+        ];
+      });
+      redEl.innerHTML = table(["Time", "Store", "User ID", "Gift", "Status", "Action"], rows, "");
+    }
+  }
+
+  // ─── Dashboard 4: Today's Sales Dashboard ───
+  const todaySales = salesRecords.filter(r => r.createdAt && r.createdAt >= today.start && r.createdAt < today.end);
+  const totalSalesToday = todaySales.length;
+
+  // By Model
+  const modelMap = {};
+  todaySales.forEach(r => {
+    const m = r.model || "Unknown";
+    modelMap[m] = (modelMap[m] || 0) + 1;
+  });
+  const modelEntries = Object.entries(modelMap).sort((a, b) => b[1] - a[1]);
+
+  // By Province → Store (nested)
+  const provStoreMap = {};
+  todaySales.forEach(r => {
+    const p = r.province || "Unknown";
+    const s = r.store || "Unknown";
+    if (!provStoreMap[p]) provStoreMap[p] = {};
+    provStoreMap[p][s] = (provStoreMap[p][s] || 0) + 1;
+  });
+
+  const salesDateEl = document.getElementById("dashboardSalesDate");
+  if (salesDateEl) salesDateEl.textContent = todayStr;
+
+  const salesKpiRow = document.getElementById("dashSalesKpiRow");
+  if (salesKpiRow) {
+    salesKpiRow.innerHTML = `
+      <div class="dash-kpi">
+        <span class="dash-kpi-value">${totalSalesToday}</span>
+        <span class="dash-kpi-label">Units Sold Today</span>
+      </div>
+      <div class="dash-kpi">
+        <span class="dash-kpi-value">${modelEntries.length}</span>
+        <span class="dash-kpi-label">SKUs Sold</span>
+      </div>
+    `;
+  }
+
+  const modelEl = document.getElementById("dashModelBreakdown");
+  if (modelEl) {
+    modelEl.innerHTML = modelEntries.length
+      ? modelEntries.map(([name, count]) => `<div class="dash-bar-item"><span class="dash-bar-label">${escapeHtml(name)}</span><div class="dash-bar-track"><div class="dash-bar-fill dash-bar-fill-sales" style="width:${Math.round(count / Math.max(...modelEntries.map(e => e[1]))) * 100}%"></div></div><span class="dash-bar-value">${count}台</span></div>`).join("")
+      : `<div class="empty-state">No sales today</div>`;
+  }
+
+  const provSalesEl = document.getElementById("dashProvinceStoreSales");
+  if (provSalesEl) {
+    const provList = Object.entries(provStoreMap).sort((a, b) => {
+      const sumA = Object.values(a[1]).reduce((s, v) => s + v, 0);
+      const sumB = Object.values(b[1]).reduce((s, v) => s + v, 0);
+      return sumB - sumA;
+    });
+    if (!provList.length) {
+      provSalesEl.innerHTML = `<div class="empty-state">No sales today</div>`;
+    } else {
+      let html = "";
+      provList.forEach(([prov, stores]) => {
+        const provTotal = Object.values(stores).reduce((s, v) => s + v, 0);
+        html += `<div class="dash-group"><div class="dash-group-header"><strong>${escapeHtml(prov)}</strong><span class="dash-group-total">${provTotal}台</span></div>`;
+        Object.entries(stores).sort((a, b) => b[1] - a[1]).forEach(([store, count]) => {
+          html += `<div class="dash-bar-item dash-bar-item-sub"><span class="dash-bar-label">${escapeHtml(store)}</span><div class="dash-bar-track"><div class="dash-bar-fill dash-bar-fill-sales" style="width:${Math.round(count / Math.max(...Object.values(stores))) * 100}%"></div></div><span class="dash-bar-value">${count}台</span></div>`;
+        });
+        html += `</div>`;
+      });
+      provSalesEl.innerHTML = html;
+    }
+  }
 }
 
 async function renderAll() {
@@ -4239,6 +4442,19 @@ if (els.salesCameraImage) {
 // Initialize new Learning page components
 initCarouselArrows();
 initLearningNavLinks();
+
+// ── Dispatch toggle: event delegation for dispatch buttons in dashboards ──
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".dispatch-toggle-btn");
+  if (!btn) return;
+  const key = btn.dataset.dispatch;
+  const currentState = btn.dataset.state === "1";
+  const status = loadDispatchStatus();
+  status[key] = !currentState;
+  saveDispatchStatus(status);
+  // Re-render dashboards
+  if (adminAuthenticated) renderAdmin();
+});
 
 // Start intro animation immediately — do not wait for DB
 if (new URLSearchParams(window.location.search).get("demo") !== "draw") {
