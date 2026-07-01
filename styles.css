@@ -235,8 +235,6 @@ h1 {
 
 main {
   padding: 28px clamp(18px, 4vw, 56px) 48px;
-  /* Isolate main content from layout recalc on scroll */
-  contain: layout style;
 }
 
 .view {
@@ -2813,6 +2811,8 @@ th {
   body {
     width: 100%;
     max-width: 100%;
+  }
+  .app-shell {
     overflow-x: hidden;
   }
 
@@ -3565,8 +3565,10 @@ td {
   body {
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
     font-size: 15px;
+  }
+  .app-shell {
+    overflow-x: hidden;
   }
 
   main {
@@ -4369,6 +4371,7 @@ body.intro-playing {
   justify-content: center;
   gap: 10px;
   padding: 32px 20px;
+  min-height: 100px;
   pointer-events: none;
 }
 .draw-upload-placeholder span {
@@ -4404,28 +4407,29 @@ body.intro-playing {
   50% { border-left-color: #FCA5A5; }
 }
 
-/* Toast notification */
+/* Toast notification — centered on screen */
 .toast-bar {
   position: fixed;
-  bottom: 28px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%) translateY(80px);
+  transform: translate(-50%, -50%) scale(0.9);
   z-index: 200;
-  padding: 14px 28px;
-  border-radius: 14px;
+  padding: 18px 32px;
+  border-radius: 16px;
   background: linear-gradient(135deg, #059669, #10B981);
   color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  box-shadow: 0 12px 36px rgba(5, 150, 105, 0.35);
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 20px 60px rgba(5, 150, 105, 0.4), 0 0 0 1px rgba(255,255,255,0.2) inset;
   opacity: 0;
-  transition: transform 0.35s cubic-bezier(0.2, 1.2, 0.36, 1), opacity 0.3s ease;
-  max-width: min(440px, calc(100vw - 40px));
+  transition: transform 0.4s cubic-bezier(0.2, 1.2, 0.36, 1), opacity 0.3s ease;
+  max-width: min(420px, calc(100vw - 48px));
   text-align: center;
   line-height: 1.5;
+  pointer-events: none;
 }
 .toast-bar--show {
-  transform: translateX(-50%) translateY(0);
+  transform: translate(-50%, -50%) scale(1);
   opacity: 1;
 }
 .toast-bar strong {
@@ -5199,10 +5203,11 @@ body.intro-playing {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-  backdrop-filter: none;
+  background: linear-gradient(135deg, #ffffff, #f8faff);
+  border-bottom: 2px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
   padding: 0;
 }
 .topbar-inner {
@@ -5240,8 +5245,9 @@ body.intro-playing {
   background: #f1f5f9;
 }
 .topbar-nav-link.is-active {
-  color: #3b82f6;
-  background: transparent;
+  color: #2563EB;
+  background: rgba(59, 130, 246, 0.08);
+  font-weight: 700;
 }
 .topbar-nav-link.is-active::after {
   content: "";
@@ -5249,9 +5255,9 @@ body.intro-playing {
   left: 16px;
   right: 16px;
   bottom: 4px;
-  height: 2.5px;
+  height: 3px;
   border-radius: 999px;
-  background: #3b82f6;
+  background: linear-gradient(90deg, #2563EB, #3B82F6);
 }
 .topbar-actions {
   display: flex;

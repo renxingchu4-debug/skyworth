@@ -1271,19 +1271,29 @@ function initProvinceSelect() {
   els.registerProvince.innerHTML = '<option value="">Select your province</option>' +
     provinces.map((p) => `<option value="${p}">${p}</option>`).join("");
 
-  // Province change -> update store dropdown
+  // Province change -> update store dropdown (use DocumentFragment for smooth rendering)
   els.registerProvince.addEventListener("change", () => {
     const province = els.registerProvince.value;
-    els.registerStore.innerHTML = "";
     if (!province) {
       els.registerStore.disabled = true;
       els.registerStore.innerHTML = '<option value="">Select province first</option>';
       return;
     }
     const storeList = PROVINCE_STORE_MAP[province] || [];
+    const frag = document.createDocumentFragment();
+    const defaultOpt = document.createElement("option");
+    defaultOpt.value = "";
+    defaultOpt.textContent = "Select your store";
+    frag.appendChild(defaultOpt);
+    storeList.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = s;
+      frag.appendChild(opt);
+    });
     els.registerStore.disabled = false;
-    els.registerStore.innerHTML = '<option value="">Select your store</option>' +
-      storeList.map((s) => `<option value="${s}">${s}</option>`).join("");
+    els.registerStore.textContent = ""; // clear
+    els.registerStore.appendChild(frag);
   });
 }
 
@@ -4324,7 +4334,8 @@ if (surveyReceiptInput) {
     const placeholder = document.querySelector(".draw-upload-placeholder");
     if (file && placeholder) {
       const sizeKB = (file.size / 1024).toFixed(0);
-      placeholder.innerHTML = `<span style="color:#16A34A;">✓</span> <strong>${file.name}</strong> (${sizeKB} KB)`;
+      // Keep the same flex-column structure to prevent card size jumping
+      placeholder.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span style="color:#16A34A;font-weight:600;">${file.name}</span><span style="color:#94a3b8;font-size:12px;">${sizeKB} KB</span>`;
     }
   });
 }
