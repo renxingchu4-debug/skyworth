@@ -241,10 +241,30 @@ async function migrateAddColumns() {
   for (const [table, alters] of Object.entries(columnsToAdd)) {
     const sql = `ALTER TABLE ${JSON.stringify(table)} ${alters.join(", ")}`;
     try {
-      await supabase.rpc("exec_sql", { sql: `ALTER TABLE ${JSON.stringify(table)} ${alters.join(", ")}` });
+      await supabase.rpc("exec_sql", { sql });
     } catch (e) {
-      // exec_sql may not be available; columns will be added on next ensureTable via REST
-      console.warn(`Could not migrate columns for ${table}:`, e.message);
+      console.warn(`Could not migrate columns for ${table} via RPC:`, e.message);
+      // Fallback: try Supabase Management API to execute SQL directly
+      try {
+        const projectRef = SUPABASE_URL.match(/https:\/\/(.+)\.supabase\.co/)?.[1];
+        if (projectRef && SUPABASE_SERVICE_KEY) {
+          const mgmtRes = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ query: sql })
+          });
+          if (!mgmtRes.ok) {
+            console.warn(`Management API migration failed for ${table}:`, mgmtRes.status);
+          } else {
+            console.log(`Migrated columns for ${table} via Management API`);
+          }
+        }
+      } catch (mgmtErr) {
+        console.warn(`Management API migration failed for ${table}:`, mgmtErr.message);
+      }
     }
   }
 
@@ -457,7 +477,17 @@ async function supabasePut(store, item) {
   const { error } = await supabase
     .from(store)
     .upsert(payload);
-  if (error) throw new Error(error.message);
+  if (error) {
+    // If the error is about a missing column in schema cache, retry with base columns only
+    if (error.message && error.message.includes("Could not find") && error.message.includes("schema cache")) {
+      console.warn(`Schema cache miss on ${store}, retrying with base columns only:`, error.message);
+      const basePayload = { id: item.id, data: item, updated_at: new Date().toISOString() };
+      const { error: retryError } = await supabase.from(store).upsert(basePayload);
+      if (retryError) throw new Error(retryError.message);
+      return;
+    }
+    throw new Error(error.message);
+  }
 }
 
 async function supabaseDelete(store, id) {
