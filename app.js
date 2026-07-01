@@ -197,10 +197,21 @@ const els = {
   adminPassword: $("#adminPassword"),
   adminLoginStatus: $("#adminLoginStatus"),
   exportButton: $("#exportButton"),
+  exportLearningBtn: $("#exportLearningBtn"),
+  exportDrawBtn: $("#exportDrawBtn"),
+  exportRedemptionBtn: $("#exportRedemptionBtn"),
+  exportSalesBtn: $("#exportSalesBtn"),
   backupButton: $("#backupButton"),
   restoreButton: $("#restoreButton"),
   restoreInput: $("#restoreInput"),
   clearButton: $("#clearButton"),
+  storageStats: $("#storageStats"),
+  dbBarFill: $("#dbBarFill"),
+  dbBarLabel: $("#dbBarLabel"),
+  imgBarFill: $("#imgBarFill"),
+  imgBarLabel: $("#imgBarLabel"),
+  perTableActions: $("#perTableActions"),
+  refreshStatsBtn: $("#refreshStatsBtn"),
   topPlayers: $("#topPlayers"),
   weeklyWinners: $("#weeklyWinners"),
   activeLearnerPoints: $("#activeLearnerPoints"),
@@ -3098,7 +3109,13 @@ async function renderMall() {
 function table(headers, rows, emptyText) {
   if (!rows.length) return `<div class="empty-state">${emptyText}</div>`;
   const head = headers.map((item) => `<th>${item}</th>`).join("");
-  const body = rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`).join("");
+  const body = rows.map((row) => `<tr>${row.map((cell) => {
+    // If cell is already HTML (contains tags), render as-is; otherwise escape
+    if (typeof cell === "string" && /<[a-zA-Z][^>]*>/.test(cell)) {
+      return `<td>${cell}</td>`;
+    }
+    return `<td>${escapeHtml(cell)}</td>`;
+  }).join("")}</tr>`).join("");
   return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
@@ -3434,6 +3451,7 @@ async function renderAdmin() {
       item.userName,
       item.province || "",
       item.store || "",
+      escapeHtml(item.userId || ""),
       getSpecializationMeta(item.specializationId).title,
       item.courseTitle,
       `${Math.round(item.videoProgress || 0)}%`,
@@ -3449,6 +3467,7 @@ async function renderAdmin() {
       item.userName,
       item.province || "",
       item.store || "",
+      escapeHtml(item.userId || ""),
       item.itemName,
       `${item.cost} pts`
     ]);
@@ -3468,15 +3487,23 @@ async function renderAdmin() {
 
   const surveyRows = surveys
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .map((item) => [
-      formatTime(item.createdAt),
-      item.name,
-      item.province || "",
-      item.store || item.group || "",
-      item.model || item.satisfaction || "",
-      item.receipt ? item.receipt.name : "",
-      displayPrize(item.prize)
-    ]);
+    .map((item) => {
+      const receiptDisplay = item.receipt
+        ? (item.receipt.url || item.receipt.dataUrl
+            ? `<a href="${item.receipt.url || item.receipt.dataUrl}" target="_blank" rel="noopener" title="View receipt">${escapeHtml(item.receipt.name || "Receipt")}</a>`
+            : escapeHtml(item.receipt.name || "Uploaded"))
+        : "";
+      return [
+        formatTime(item.createdAt),
+        item.name,
+        item.province || "",
+        item.store || item.group || "",
+        escapeHtml(item.userId || ""),
+        item.model || item.satisfaction || "",
+        receiptDisplay,
+        displayPrize(item.prize)
+      ];
+    });
 
   const salesRows = salesRecords
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -3485,21 +3512,26 @@ async function renderAdmin() {
       item.userName,
       item.province || "",
       item.store || "",
+      escapeHtml(item.userId || ""),
       item.model || "",
-      item.barcodeNumber || ""
+      item.barcodeNumber || "",
+      item.image ? (item.image.url || item.image.dataUrl
+        ? `<a href="${item.image.url || item.image.dataUrl}" target="_blank" rel="noopener" title="View image">${escapeHtml(item.image.name || "Image")}</a>`
+        : escapeHtml(item.image.name || "Uploaded")) : ""
     ]);
 
   $("#userTable").innerHTML = table(["Name", "Province", "Store", "Registered At", "Last Updated"], userRows, "No users yet.");
-  $("#learningTable").innerHTML = table(["Learner", "Province", "Store", "Specialized Course", "Course", "Video Progress", "File Status", "Test Status", "Points Earned"], learningRows, "No progress yet.");
-  $("#redemptionTable").innerHTML = table(["Time", "Learner", "Province", "Store", "Gift", "Cost"], redemptionRows, "No redemptions yet.");
+  $("#learningTable").innerHTML = table(["Learner", "Province", "Store", "User ID", "Specialized Course", "Course", "Video Progress", "File Status", "Test Status", "Points Earned"], learningRows, "No progress yet.");
+  $("#redemptionTable").innerHTML = table(["Time", "Learner", "Province", "Store", "User ID", "Gift", "Cost"], redemptionRows, "No redemptions yet.");
   $("#attemptTable").innerHTML = table(["Time", "Learner", "Province", "Store", "Course", "Answer", "Correct Answer", "Result"], attemptRows, "No attempts yet.");
   if (els.salesRecordTable) {
-    els.salesRecordTable.innerHTML = table(["Time", "User Name", "Province", "Store", "Model", "Barcode Number"], salesRows, "No scans yet.");
+    els.salesRecordTable.innerHTML = table(["Time", "User Name", "Province", "Store", "User ID", "Model", "Barcode Number", "Image"], salesRows, "No scans yet.");
   }
-  $("#surveyTable").innerHTML = table(["Time", "Name", "Province", "Store", "TV Model", "Receipt", "Prize"], surveyRows, "No sales yet.");
+  $("#surveyTable").innerHTML = table(["Time", "Name", "Province", "Store", "User ID", "TV Model", "Receipt", "Prize"], surveyRows, "No sales yet.");
   renderCourseManager(restoredCourses);
   renderMallManager(restoredMallItems);
   renderLotteryInsights(surveys);
+  refreshStorageStats();
 }
 
 async function renderAll() {
@@ -3632,6 +3664,143 @@ async function exportCsv() {
   link.download = `admin_data_${new Date().toISOString().slice(0, 10)}.csv`;
   link.click();
   URL.revokeObjectURL(link.href);
+}
+
+function downloadCsv(filename, headers, rows) {
+  const lines = [headers.join(","), ...rows.map(r => r.map(csvEscape).join(","))];
+  const blob = new Blob([`\uFEFF${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+// ── Export 1: Learning Progress (all users) ──
+async function exportLearning() {
+  const [learningRecords, users] = await Promise.all([getAll("learningRecords"), getAll("users")]);
+  const headers = ["User ID", "User Name", "Province", "Store", "Specialized Course", "Course Title", "Video Progress (%)", "Video Completed", "Material Viewed", "Quiz Completed", "Points Earned", "Last Updated"];
+  const rows = learningRecords
+    .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))
+    .map(item => [
+      item.userId || "",
+      item.userName || "",
+      item.province || "",
+      item.store || "",
+      getSpecializationMeta(item.specializationId).title,
+      item.courseTitle || "",
+      Math.round(item.videoProgress || 0),
+      item.videoCompleted ? "Yes" : "No",
+      item.materialViewed ? "Yes" : "No",
+      item.quizCompleted ? "Yes" : "No",
+      item.pointsEarned || 0,
+      formatTime(item.updatedAt)
+    ]);
+  downloadCsv(`learning_progress_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+// ── Export 2: Lucky Draw (surveys + prizes + receipts) ──
+async function exportLuckyDraw() {
+  const surveys = await getAll("surveys");
+  const headers = ["User ID", "User Name", "Province", "Store", "TV Model", "Receipt File Name", "Receipt URL", "Prize Won", "Prize Time", "Draw Time"];
+  const rows = surveys
+    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
+    .map(item => [
+      item.userId || "",
+      item.name || "",
+      item.province || "",
+      item.store || item.group || "",
+      item.model || item.satisfaction || "",
+      item.receipt ? (item.receipt.name || "") : "",
+      item.receipt ? (item.receipt.url || item.receipt.dataUrl || "") : "",
+      displayPrize(item.prize),
+      item.prizeAt ? formatTime(item.prizeAt) : "",
+      formatTime(item.createdAt)
+    ]);
+  downloadCsv(`lucky_draw_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+// ── Export 3: Points Mall Redemptions (all users) ──
+async function exportRedemptions() {
+  const redemptions = await getAll("redemptions");
+  const headers = ["User ID", "User Name", "Province", "Store", "Gift Name", "Cost (pts)", "Redemption Time"];
+  const rows = redemptions
+    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
+    .map(item => [
+      item.userId || "",
+      item.userName || "",
+      item.province || "",
+      item.store || "",
+      item.itemName || "",
+      item.cost || 0,
+      formatTime(item.createdAt)
+    ]);
+  downloadCsv(`redemptions_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+// ── Export 4: Sales Records (all users) ──
+async function exportSales() {
+  const salesRecords = await getAll("salesRecords");
+  const headers = ["User ID", "User Name", "Province", "Store", "Model", "Barcode Number", "Image File Name", "Image URL", "Record Time"];
+  const rows = salesRecords
+    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
+    .map(item => [
+      item.userId || "",
+      item.userName || "",
+      item.province || "",
+      item.store || "",
+      item.model || "",
+      item.barcodeNumber || "",
+      item.image ? (item.image.name || "") : "",
+      item.image ? (item.image.url || item.image.dataUrl || "") : "",
+      formatTime(item.createdAt)
+    ]);
+  downloadCsv(`sales_records_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+// ── Storage stats ──
+async function refreshStorageStats() {
+  if (!els.storageStats) return;
+  try {
+    const res = await fetch("./api/stats");
+    const stats = await res.json();
+    if (stats.error) return;
+
+    const dbMB = (stats.dbEstimateBytes / (1024 * 1024)).toFixed(2);
+    const imgMB = (stats.imageEstimateBytes / (1024 * 1024)).toFixed(2);
+    const dbMax = stats.limits.dbMaxMB;
+    const imgMax = stats.limits.storageMaxMB;
+
+    els.dbBarFill.style.width = Math.min((dbMB / dbMax) * 100, 100) + "%";
+    els.dbBarLabel.textContent = `${dbMB} / ${dbMax} MB`;
+
+    els.imgBarFill.style.width = Math.min((imgMB / imgMax) * 100, 100) + "%";
+    els.imgBarLabel.textContent = `${imgMB} / ${imgMax} MB (${stats.imageCount} files)`;
+
+    // Color coding
+    els.dbBarFill.className = "storage-bar-fill" + (dbMB / dbMax > 0.8 ? " danger" : dbMB / dbMax > 0.6 ? " warning" : "");
+    els.imgBarFill.className = "storage-bar-fill" + (imgMB / imgMax > 0.8 ? " danger" : imgMB / imgMax > 0.6 ? " warning" : "");
+
+    els.storageStats.style.display = "";
+    if (els.perTableActions) els.perTableActions.style.display = "";
+  } catch (e) {
+    console.warn("Failed to refresh storage stats:", e);
+  }
+}
+
+// ── Per-table clear ──
+async function clearOneTable(storeName) {
+  const labels = {
+    users: "all users",
+    attempts: "all quiz attempts",
+    surveys: "all lucky draw data",
+    learningRecords: "all learning progress",
+    redemptions: "all redemptions",
+    salesRecords: "all sales records"
+  };
+  if (!confirm(`Delete ${labels[storeName] || storeName}? This cannot be undone.`)) return;
+  await clearStore(storeName);
+  await renderAdmin();
 }
 
 async function exportBackup() {
@@ -3999,6 +4168,28 @@ if (viewAllBtn) {
   });
 }
 els.exportButton.addEventListener("click", exportCsv);
+if (els.exportLearningBtn) els.exportLearningBtn.addEventListener("click", exportLearning);
+if (els.exportDrawBtn) els.exportDrawBtn.addEventListener("click", exportLuckyDraw);
+if (els.exportRedemptionBtn) els.exportRedemptionBtn.addEventListener("click", exportRedemptions);
+if (els.exportSalesBtn) els.exportSalesBtn.addEventListener("click", exportSales);
+
+// Data panel inline download buttons
+document.querySelectorAll(".data-panel-dl-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const dl = btn.dataset.dl;
+    if (dl === "learning") exportLearning();
+    else if (dl === "draw") exportLuckyDraw();
+    else if (dl === "redemption") exportRedemptions();
+    else if (dl === "sales") exportSales();
+  });
+});
+
+if (els.refreshStatsBtn) els.refreshStatsBtn.addEventListener("click", refreshStorageStats);
+if (els.perTableActions) {
+  els.perTableActions.querySelectorAll("[data-clear]").forEach(btn => {
+    btn.addEventListener("click", () => clearOneTable(btn.dataset.clear));
+  });
+}
 if (els.backupButton) els.backupButton.addEventListener("click", exportBackup);
 if (els.restoreButton) els.restoreButton.addEventListener("click", () => els.restoreInput?.click());
 if (els.restoreInput) els.restoreInput.addEventListener("change", () => importBackupFile(els.restoreInput.files?.[0]));

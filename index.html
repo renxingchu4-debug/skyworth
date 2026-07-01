@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=photo-sky-restore" />
+    <link rel="stylesheet" href="./styles.css?v=datapanel-top" />
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   </head>
   <body>
@@ -273,7 +273,6 @@
           <section class="panel survey-form-panel">
             <div class="panel-title">
               <h2>Sales Record Submission</h2>
-              <span class="status-pill">Unlock Draw</span>
             </div>
 
             <form id="surveyForm" class="draw-submission-form">
@@ -317,7 +316,6 @@
                   <label class="draw-step-label">Submit</label>
                   <button class="draw-submit-btn" type="submit">
                     Submit Sales Record
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                   </button>
                 </div>
               </div>
@@ -360,15 +358,15 @@
 
                 <!-- Wheel Segments -->
                 <div class="draw-wheel-segments festive-wheel-segments" id="wheelCanvas">
-                  <span class="draw-seg-label draw-seg-0">50,000<br>Points</span>
-                  <span class="draw-seg-label draw-seg-1">QLED TV</span>
-                  <span class="draw-seg-label draw-seg-2">Missed</span>
-                  <span class="draw-seg-label draw-seg-3">Hand Fan</span>
-                  <span class="draw-seg-label draw-seg-4">Electric<br>Toothbrush</span>
-                  <span class="draw-seg-label draw-seg-5">Electric<br>Shaver</span>
-                  <span class="draw-seg-label draw-seg-6">Bluetooth<br>Earbuds</span>
-                  <span class="draw-seg-label draw-seg-7">Green Bag</span>
-                  <span class="draw-seg-label draw-seg-8">20,000<br>Points</span>
+                  <span class="draw-seg-label draw-seg-0" style="--seg-angle: 0deg;">50,000<br>Points</span>
+                  <span class="draw-seg-label draw-seg-1" style="--seg-angle: 40deg;">QLED TV</span>
+                  <span class="draw-seg-label draw-seg-2" style="--seg-angle: 80deg;">Missed</span>
+                  <span class="draw-seg-label draw-seg-3" style="--seg-angle: 120deg;">Hand Fan</span>
+                  <span class="draw-seg-label draw-seg-4" style="--seg-angle: 160deg;">Electric<br>Toothbrush</span>
+                  <span class="draw-seg-label draw-seg-5" style="--seg-angle: 200deg;">Electric<br>Shaver</span>
+                  <span class="draw-seg-label draw-seg-6" style="--seg-angle: 240deg;">Bluetooth<br>Earbuds</span>
+                  <span class="draw-seg-label draw-seg-7" style="--seg-angle: 280deg;">Green Bag</span>
+                  <span class="draw-seg-label draw-seg-8" style="--seg-angle: 320deg;">20,000<br>Points</span>
                 </div>
 
                 <!-- Center Hub -->
@@ -524,8 +522,8 @@
                       Open Camera
                     </button>
                   </div>
-                  <input id="salesImage" type="file" accept="image/*" hidden />
-                  <input id="salesCameraImage" type="file" accept="image/*" capture="environment" hidden />
+                  <input id="salesImage" type="file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" />
+                  <input id="salesCameraImage" type="file" accept="image/*" capture="environment" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" />
                 </div>
               </div>
 
@@ -676,11 +674,42 @@
           </div>
         </div>
           <div class="admin-actions">
-            <button id="exportButton" class="secondary-btn">Export CSV</button>
+            <button id="exportButton" class="secondary-btn">Export All CSV</button>
+            <button id="exportLearningBtn" class="secondary-btn">Export Learning</button>
+            <button id="exportDrawBtn" class="secondary-btn">Export Lucky Draw</button>
+            <button id="exportRedemptionBtn" class="secondary-btn">Export Redemptions</button>
+            <button id="exportSalesBtn" class="secondary-btn">Export Sales</button>
             <button id="backupButton" class="secondary-btn" type="button">Backup Data</button>
             <button id="restoreButton" class="secondary-btn" type="button">Restore Data</button>
             <input id="restoreInput" type="file" accept="application/json,.json" hidden />
-            <button id="clearButton" class="danger-btn">Clear Data</button>
+            <button id="clearButton" class="danger-btn">Clear All Data</button>
+          </div>
+          <div id="storageStats" class="storage-stats" style="display:none;">
+            <div class="storage-header">
+              <span>Storage Usage</span>
+              <button id="refreshStatsBtn" class="secondary-btn" style="padding:4px 12px;font-size:12px;">Refresh</button>
+            </div>
+            <div class="storage-bars">
+              <div class="storage-bar-item">
+                <span>Database</span>
+                <div class="storage-bar-track"><div id="dbBarFill" class="storage-bar-fill"></div></div>
+                <span id="dbBarLabel">0 / 500 MB</span>
+              </div>
+              <div class="storage-bar-item">
+                <span>Images</span>
+                <div class="storage-bar-track"><div id="imgBarFill" class="storage-bar-fill"></div></div>
+                <span id="imgBarLabel">0 / 1024 MB</span>
+              </div>
+            </div>
+          </div>
+          <div id="perTableActions" class="per-table-actions" style="display:none;">
+            <span style="font-size:13px;color:#64748b;">Delete by table:</span>
+            <button class="danger-btn-sm" data-clear="users">Clear Users</button>
+            <button class="danger-btn-sm" data-clear="attempts">Clear Attempts</button>
+            <button class="danger-btn-sm" data-clear="surveys">Clear Draw Data</button>
+            <button class="danger-btn-sm" data-clear="learningRecords">Clear Learning</button>
+            <button class="danger-btn-sm" data-clear="redemptions">Clear Redemptions</button>
+            <button class="danger-btn-sm" data-clear="salesRecords">Clear Sales</button>
           </div>
         <div class="stats-grid">
           <article class="stat"><span>Users</span><strong id="statUsers">0</strong></article>
@@ -689,6 +718,48 @@
           <article class="stat"><span>Draw Entries</span><strong id="statSurveys">0</strong></article>
           <article class="stat"><span>Sales Records</span><strong id="statSalesRecords">0</strong></article>
           <article class="stat"><span>Gifts Won</span><strong id="statWins">0</strong></article>
+        </div>
+        <!-- ═══ Four Core Data Panels (Top) ═══ -->
+        <div class="data-grid">
+          <section class="panel data-panel">
+            <div class="data-panel-header">
+              <h3>Learning Progress</h3>
+              <button class="data-panel-dl-btn" data-dl="learning" title="Download CSV">Download</button>
+            </div>
+            <div id="learningTable" class="table-wrap"></div>
+          </section>
+          <section class="panel data-panel">
+            <div class="data-panel-header">
+              <h3>Lucky Draw</h3>
+              <button class="data-panel-dl-btn" data-dl="draw" title="Download CSV">Download</button>
+            </div>
+            <div id="surveyTable" class="table-wrap"></div>
+          </section>
+          <section class="panel data-panel">
+            <div class="data-panel-header">
+              <h3>Redemptions</h3>
+              <button class="data-panel-dl-btn" data-dl="redemption" title="Download CSV">Download</button>
+            </div>
+            <div id="redemptionTable" class="table-wrap"></div>
+          </section>
+          <section class="panel data-panel">
+            <div class="data-panel-header">
+              <h3>Sales Records</h3>
+              <button class="data-panel-dl-btn" data-dl="sales" title="Download CSV">Download</button>
+            </div>
+            <div id="salesRecordTable" class="table-wrap"></div>
+          </section>
+        </div>
+        <!-- ═══ Other data panels ═══ -->
+        <div class="data-grid">
+          <section class="panel">
+            <h3>Registered Users</h3>
+            <div id="userTable" class="table-wrap"></div>
+          </section>
+          <section class="panel">
+            <h3>Quiz Attempts</h3>
+            <div id="attemptTable" class="table-wrap"></div>
+          </section>
         </div>
         <section class="panel upload-panel admin-upload-panel">
           <div class="panel-title">
@@ -775,32 +846,6 @@
           </div>
           <div id="mallManagerList" class="course-manager-list empty-state">No gifts yet.</div>
         </section>
-        <div class="data-grid">
-          <section class="panel">
-            <h3>Registered Users</h3>
-            <div id="userTable" class="table-wrap"></div>
-          </section>
-          <section class="panel">
-            <h3>Learner Progress</h3>
-            <div id="learningTable" class="table-wrap"></div>
-          </section>
-          <section class="panel">
-            <h3>Points Mall Redemptions</h3>
-            <div id="redemptionTable" class="table-wrap"></div>
-          </section>
-          <section class="panel">
-            <h3>Quiz Attempts</h3>
-            <div id="attemptTable" class="table-wrap"></div>
-          </section>
-          <section class="panel">
-            <h3>Scanned Sales Records</h3>
-            <div id="salesRecordTable" class="table-wrap"></div>
-          </section>
-          <section class="panel">
-            <h3>Sales Records and Draw Results</h3>
-            <div id="surveyTable" class="table-wrap"></div>
-          </section>
-        </div>
         </div><!-- end adminContent -->
       </section>
     </main>
@@ -894,7 +939,7 @@
           window.forceDemoDrawView();
         }
       </script>
-      <script src="./app.js?v=photo-sky-restore"></script>
+      <script src="./app.js?v=datapanel-top"></script>
       <script>
         if (window.forceDemoDrawView) {
           window.setTimeout(window.forceDemoDrawView, 250);

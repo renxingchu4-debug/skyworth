@@ -10,6 +10,12 @@ services:
         value: production
       - key: DATA_DIR
         value: /var/data
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
     disk:
       name: skyworth-learning-data
       mountPath: /var/data

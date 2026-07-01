@@ -76,6 +76,10 @@ async function initSupabase() {
       if (error.code === "42P01") {
         console.log("Tables not found, creating...");
         await createTables();
+        // New tables already have relational columns; just create views
+        await createViews();
+        console.log("Supabase connected successfully:", SUPABASE_URL);
+        return true;
       } else {
         console.error("Supabase connection failed, falling back to file storage");
         useSupabase = false;
@@ -84,6 +88,10 @@ async function initSupabase() {
       }
     }
     console.log("Supabase connected successfully:", SUPABASE_URL, "| rows:", data ? data.length : 0);
+    // Run column migration for existing tables (add missing columns to pre-existing DBs)
+    await migrateAddColumns();
+    // Create convenience views
+    await createViews();
     return true;
   } catch (error) {
     console.error("Supabase init exception:", error.message, error.stack);
@@ -114,30 +122,70 @@ async function createTables() {
     CREATE TABLE IF NOT EXISTS attempts (
       id TEXT PRIMARY KEY,
       data JSONB NOT NULL DEFAULT '{}',
+      user_id TEXT,
+      user_name TEXT,
+      province TEXT,
+      store TEXT,
+      course_id TEXT,
+      course_title TEXT,
+      passed BOOLEAN,
+      answer TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
     CREATE TABLE IF NOT EXISTS surveys (
       id TEXT PRIMARY KEY,
       data JSONB NOT NULL DEFAULT '{}',
+      user_id TEXT,
+      user_name TEXT,
+      province TEXT,
+      store TEXT,
+      tv_model TEXT,
+      prize TEXT,
+      receipt_url TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
     CREATE TABLE IF NOT EXISTS "learningRecords" (
       id TEXT PRIMARY KEY,
       data JSONB NOT NULL DEFAULT '{}',
+      user_id TEXT,
+      user_name TEXT,
+      province TEXT,
+      store TEXT,
+      course_id TEXT,
+      course_title TEXT,
+      specialization_id TEXT,
+      video_progress FLOAT,
+      video_completed BOOLEAN,
+      quiz_completed BOOLEAN,
+      points_earned INTEGER,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
     CREATE TABLE IF NOT EXISTS redemptions (
       id TEXT PRIMARY KEY,
       data JSONB NOT NULL DEFAULT '{}',
+      user_id TEXT,
+      user_name TEXT,
+      province TEXT,
+      store TEXT,
+      item_id TEXT,
+      item_name TEXT,
+      cost INTEGER,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
     CREATE TABLE IF NOT EXISTS "salesRecords" (
       id TEXT PRIMARY KEY,
       data JSONB NOT NULL DEFAULT '{}',
+      user_id TEXT,
+      user_name TEXT,
+      province TEXT,
+      store TEXT,
+      model TEXT,
+      barcode_number TEXT,
+      image_url TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
@@ -147,10 +195,16 @@ async function createTables() {
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
+    -- Indexes for common query patterns
     CREATE INDEX IF NOT EXISTS idx_users_created ON users(created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_surveys_created ON surveys(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_surveys_user_id ON surveys(user_id);
     CREATE INDEX IF NOT EXISTS idx_sales_records_created ON "salesRecords"(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_sales_records_user_id ON "salesRecords"(user_id);
     CREATE INDEX IF NOT EXISTS idx_learning_records_created ON "learningRecords"(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_learning_records_user_id ON "learningRecords"(user_id);
+    CREATE INDEX IF NOT EXISTS idx_redemptions_user_id ON redemptions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_attempts_user_id ON attempts(user_id);
   `;
   const { error } = await supabase.rpc("exec_sql", { sql });
   if (error) {
@@ -158,6 +212,131 @@ async function createTables() {
     console.warn("Could not create tables via RPC, will create on first write:", error.message);
   } else {
     console.log("Supabase tables created successfully.");
+  }
+}
+
+// ─── Add missing columns to existing tables (migration for existing DBs) ───
+async function migrateAddColumns() {
+  if (!supabase) return;
+  console.log("Running column migration for existing tables...");
+
+  const columnsToAdd = {};
+
+  // Standard user columns for all user-linked tables
+  for (const table of USER_LINKED_TABLES) {
+    if (!columnsToAdd[table]) columnsToAdd[table] = [];
+    for (const col of STANDARD_USER_COLUMNS) {
+      columnsToAdd[table].push(`ADD COLUMN IF NOT EXISTS ${col.colName} ${col.colType}`);
+    }
+  }
+
+  // Extra columns per table
+  for (const [table, cols] of Object.entries(TABLE_EXTRA_COLUMNS)) {
+    if (!columnsToAdd[table]) columnsToAdd[table] = [];
+    for (const col of cols) {
+      columnsToAdd[table].push(`ADD COLUMN IF NOT EXISTS ${col.colName} ${col.colType}`);
+    }
+  }
+
+  for (const [table, alters] of Object.entries(columnsToAdd)) {
+    const sql = `ALTER TABLE ${JSON.stringify(table)} ${alters.join(", ")}`;
+    try {
+      await supabase.rpc("exec_sql", { sql: `ALTER TABLE ${JSON.stringify(table)} ${alters.join(", ")}` });
+    } catch (e) {
+      // exec_sql may not be available; columns will be added on next ensureTable via REST
+      console.warn(`Could not migrate columns for ${table}:`, e.message);
+    }
+  }
+
+  console.log("Column migration complete.");
+}
+
+// ─── Create convenience views for Supabase Dashboard SQL queries ───
+async function createViews() {
+  if (!supabase) return;
+  console.log("Creating convenience views...");
+
+  const viewsSql = `
+    -- View: all surveys with user info, receipt URL, and prize
+    CREATE OR REPLACE VIEW v_lucky_draw AS
+    SELECT
+      s.id,
+      s.user_id,
+      s.user_name,
+      s.province,
+      s.store,
+      s.tv_model,
+      s.prize,
+      s.receipt_url,
+      s.created_at,
+      s.updated_at
+    FROM surveys s
+    ORDER BY s.created_at DESC;
+
+    -- View: user summary (learning + points + draw + sales)
+    CREATE OR REPLACE VIEW v_user_summary AS
+    SELECT
+      u.id AS user_id,
+      u.data->>'name' AS name,
+      u.data->>'province' AS province,
+      u.data->>'store' AS store,
+      COALESCE(lr.total_points, 0) AS points_earned,
+      COALESCE(rd.total_spent, 0) AS points_spent,
+      COALESCE(lr.total_points, 0) - COALESCE(rd.total_spent, 0) AS points_available,
+      COALESCE(lr.courses_completed, 0) AS courses_completed,
+      COALESCE(sv.draw_count, 0) AS draw_count,
+      COALESCE(sv.win_count, 0) AS win_count,
+      COALESCE(sr.sales_count, 0) AS sales_count,
+      u.created_at AS registered_at
+    FROM users u
+    LEFT JOIN (
+      SELECT user_id, SUM(points_earned) AS total_points, COUNT(*) AS courses_completed
+      FROM "learningRecords" GROUP BY user_id
+    ) lr ON lr.user_id = u.id
+    LEFT JOIN (
+      SELECT user_id, SUM(cost) AS total_spent FROM redemptions GROUP BY user_id
+    ) rd ON rd.user_id = u.id
+    LEFT JOIN (
+      SELECT user_id, COUNT(*) AS draw_count, COUNT(*) FILTER (WHERE prize IS NOT NULL AND prize != '' AND prize != 'Missed') AS win_count
+      FROM surveys GROUP BY user_id
+    ) sv ON sv.user_id = u.id
+    LEFT JOIN (
+      SELECT user_id, COUNT(*) AS sales_count FROM "salesRecords" GROUP BY user_id
+    ) sr ON sr.user_id = u.id
+    ORDER BY points_available DESC;
+
+    -- View: redemptions with user info
+    CREATE OR REPLACE VIEW v_redemptions AS
+    SELECT
+      r.id, r.user_id, r.user_name, r.province, r.store,
+      r.item_id, r.item_name, r.cost, r.created_at
+    FROM redemptions r
+    ORDER BY r.created_at DESC;
+
+    -- View: sales records with user info
+    CREATE OR REPLACE VIEW v_sales_records AS
+    SELECT
+      sr.id, sr.user_id, sr.user_name, sr.province, sr.store,
+      sr.model, sr.barcode_number, sr.image_url, sr.created_at
+    FROM "salesRecords" sr
+    ORDER BY sr.created_at DESC;
+
+    -- View: learning progress with user info
+    CREATE OR REPLACE VIEW v_learning_progress AS
+    SELECT
+      lr.id, lr.user_id, lr.user_name, lr.province, lr.store,
+      lr.course_id, lr.course_title, lr.specialization_id,
+      lr.video_progress, lr.video_completed, lr.quiz_completed, lr.points_earned,
+      lr.updated_at
+    FROM "learningRecords" lr
+    ORDER BY lr.updated_at DESC;
+  `;
+
+  try {
+    await supabase.rpc("exec_sql", { sql: viewsSql });
+    console.log("Views created successfully.");
+  } catch (e) {
+    console.warn("Could not create views via RPC:", e.message);
   }
 }
 
@@ -171,6 +350,81 @@ async function ensureTable(tableName) {
   } catch (_) {
     // Table might already exist, that's fine
   }
+}
+
+// ─── Relational column helpers ───
+// Extract values from JSONB data and sync to dedicated columns for SQL queries in Supabase Dashboard.
+
+// Tables that have user-linked records: we extract userId, userName, province, store
+const USER_LINKED_TABLES = ["attempts", "learningRecords", "redemptions", "salesRecords", "surveys"];
+
+// Extra columns to extract per table (beyond the 4 standard user fields)
+const TABLE_EXTRA_COLUMNS = {
+  surveys: [
+    { jsonField: "model",        colName: "tv_model",     colType: "TEXT" },
+    { jsonField: "prize",        colName: "prize",         colType: "TEXT" },
+    { jsonField: null,           colName: "receipt_url",   colType: "TEXT",  extract: (item) => item.receipt?.url || item.receipt?.dataUrl || null }
+  ],
+  learningRecords: [
+    { jsonField: "courseId",         colName: "course_id",         colType: "TEXT" },
+    { jsonField: "courseTitle",      colName: "course_title",      colType: "TEXT" },
+    { jsonField: "specializationId", colName: "specialization_id", colType: "TEXT" },
+    { jsonField: "videoProgress",    colName: "video_progress",    colType: "FLOAT" },
+    { jsonField: "videoCompleted",   colName: "video_completed",   colType: "BOOLEAN" },
+    { jsonField: "quizCompleted",    colName: "quiz_completed",    colType: "BOOLEAN" },
+    { jsonField: "pointsEarned",     colName: "points_earned",     colType: "INTEGER" }
+  ],
+  redemptions: [
+    { jsonField: "itemId",      colName: "item_id",    colType: "TEXT" },
+    { jsonField: "itemName",    colName: "item_name",  colType: "TEXT" },
+    { jsonField: "cost",        colName: "cost",       colType: "INTEGER" }
+  ],
+  salesRecords: [
+    { jsonField: "model",         colName: "model",         colType: "TEXT" },
+    { jsonField: "barcodeNumber", colName: "barcode_number", colType: "TEXT" },
+    { jsonField: null,            colName: "image_url",     colType: "TEXT", extract: (item) => item.image?.url || item.image?.dataUrl || null }
+  ],
+  attempts: [
+    { jsonField: "courseId",    colName: "course_id",    colType: "TEXT" },
+    { jsonField: "courseTitle", colName: "course_title", colType: "TEXT" },
+    { jsonField: "passed",      colName: "passed",       colType: "BOOLEAN" },
+    { jsonField: "answer",      colName: "answer",       colType: "TEXT" }
+  ]
+};
+
+const STANDARD_USER_COLUMNS = [
+  { jsonField: "userId",   colName: "user_id",   colType: "TEXT" },
+  { jsonField: "userName", colName: "user_name", colType: "TEXT" },
+  { jsonField: "province", colName: "province",  colType: "TEXT" },
+  { jsonField: "store",    colName: "store",     colType: "TEXT" }
+];
+
+function buildRelationalPayload(store, item) {
+  const payload = { id: item.id, data: item, updated_at: new Date().toISOString() };
+
+  if (USER_LINKED_TABLES.includes(store)) {
+    for (const col of STANDARD_USER_COLUMNS) {
+      // surveys table uses "name" instead of "userName" for the user's display name
+      let value = item[col.jsonField] ?? null;
+      if (col.jsonField === "userName" && value == null) {
+        value = item["name"] ?? null;
+      }
+      payload[col.colName] = value;
+    }
+  }
+
+  const extraCols = TABLE_EXTRA_COLUMNS[store];
+  if (extraCols) {
+    for (const col of extraCols) {
+      if (col.extract) {
+        payload[col.colName] = col.extract(item);
+      } else {
+        payload[col.colName] = item[col.jsonField] ?? null;
+      }
+    }
+  }
+
+  return payload;
 }
 
 // ─── Supabase data access ───
@@ -199,9 +453,10 @@ async function supabaseGetById(store, id) {
 async function supabasePut(store, item) {
   if (!supabase) return;
   await ensureTable(store);
+  const payload = buildRelationalPayload(store, item);
   const { error } = await supabase
     .from(store)
-    .upsert({ id: item.id, data: item, updated_at: new Date().toISOString() });
+    .upsert(payload);
   if (error) throw new Error(error.message);
 }
 
@@ -330,6 +585,75 @@ async function handleApi(req, res, url) {
       storage: useSupabase ? "supabase" : "file",
       supabaseConnected: useSupabase
     });
+    return true;
+  }
+
+  // ── Storage stats ──
+  if (url.pathname === "/api/stats" && req.method === "GET") {
+    try {
+      if (useSupabase && supabase) {
+        const counts = {};
+        let totalDbBytes = 0;
+        let totalImageBytes = 0;
+        let imageCount = 0;
+
+        for (const store of stores) {
+          try {
+            const { count, error } = await supabase
+              .from(store)
+              .select("*", { count: "exact", head: true });
+            counts[store] = error ? 0 : (count || 0);
+          } catch { counts[store] = 0; }
+        }
+
+        // Estimate DB storage: query all data and measure JSON size
+        for (const store of stores) {
+          try {
+            const { data } = await supabase.from(store).select("data");
+            if (data) {
+              totalDbBytes += new Blob([JSON.stringify(data)]).size;
+            }
+          } catch {}
+        }
+
+        // Check Supabase storage for images
+        try {
+          const { data: files, error: storageErr } = await supabase.storage.from("images").list();
+          if (!storageErr && files) {
+            imageCount = files.length;
+            totalImageBytes = files.reduce((sum, f) => sum + (f.metadata?.size || 0), 0);
+          }
+        } catch {}
+
+        sendJson(res, 200, {
+          storage: "supabase",
+          dbEstimateBytes: totalDbBytes,
+          imageCount,
+          imageEstimateBytes: totalImageBytes,
+          counts,
+          limits: { dbMaxMB: 500, storageMaxMB: 1024 }
+        });
+      } else {
+        // File-based storage
+        const data = readData();
+        const counts = {};
+        let totalDbBytes = 0;
+        for (const store of stores) {
+          counts[store] = (data[store] || []).length;
+          totalDbBytes += JSON.stringify(data[store] || []).length;
+        }
+        sendJson(res, 200, {
+          storage: "file",
+          dbEstimateBytes: totalDbBytes,
+          imageCount: 0,
+          imageEstimateBytes: 0,
+          counts,
+          limits: { dbMaxMB: 500, storageMaxMB: 1024 }
+        });
+      }
+    } catch (error) {
+      sendJson(res, 500, { error: error.message });
+    }
     return true;
   }
 
