@@ -5040,9 +5040,10 @@ body.intro-playing {
 /* ── Light Top Navigation Bar ── */
 .topbar-light {
   display: block;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 100;
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
