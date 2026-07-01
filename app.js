@@ -2883,18 +2883,14 @@ async function updateWeeklyWinnersCard() {
 
   try {
     const surveys = await getAll("surveys");
-    const now = new Date();
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay());
-    weekStart.setHours(0, 0, 0, 0);
 
     const winners = surveys
-      .filter(s => s.prize && s.prizeAt && new Date(s.prizeAt) >= weekStart)
+      .filter(s => s.prize && s.prizeAt)
       .sort((a, b) => new Date(b.prizeAt) - new Date(a.prizeAt))
       .slice(0, 8);
 
     if (!winners.length) {
-      listEl.innerHTML = '<div class="draw-winners-empty-new"><svg class="draw-winners-empty-gift" width="80" height="80" viewBox="0 0 80 80"><rect x="15" y="30" width="50" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-width="1.8"/><path d="M15 30 L40 18 L65 30" fill="none" stroke="#94a3b8" stroke-width="1.8"/><path d="M40 18 L40 70" fill="none" stroke="#94a3b8" stroke-width="1.8"/><path d="M28 18 Q28 8 40 18 Q52 8 52 18" fill="none" stroke="#94a3b8" stroke-width="1.8"/><rect x="30" y="42" width="20" height="18" rx="2" fill="none" stroke="#94a3b8" stroke-width="1.2"/><line x1="40" y1="42" x2="40" y2="60" stroke="#94a3b8" stroke-width="1.2"/></svg><span class="draw-winners-empty-text">No winners this week yet</span></div>';
+      listEl.innerHTML = '<div class="draw-winners-empty-new"><svg class="draw-winners-empty-gift" width="80" height="80" viewBox="0 0 80 80"><rect x="15" y="30" width="50" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-width="1.8"/><path d="M15 30 L40 18 L65 30" fill="none" stroke="#94a3b8" stroke-width="1.8"/><path d="M40 18 L40 70" fill="none" stroke="#94a3b8" stroke-width="1.8"/><path d="M28 18 Q28 8 40 18 Q52 8 52 18" fill="none" stroke="#94a3b8" stroke-width="1.8"/><rect x="30" y="42" width="20" height="18" rx="2" fill="none" stroke="#94a3b8" stroke-width="1.2"/><line x1="40" y1="42" x2="40" y2="60" stroke="#94a3b8" stroke-width="1.2"/></svg><span class="draw-winners-empty-text">No winners yet</span></div>';
       return;
     }
 
@@ -2906,20 +2902,21 @@ async function updateWeeklyWinnersCard() {
       </div>`;
     }).join("");
   } catch {
-    listEl.innerHTML = '<div class="draw-winners-empty-new"><span class="draw-winners-empty-text">No winners this week yet</span></div>';
+    listEl.innerHTML = '<div class="draw-winners-empty-new"><span class="draw-winners-empty-text">No winners yet</span></div>';
   }
 }
 
 function showPrizeModal(prizeName) {
   const existing = document.querySelector(".prize-modal");
   if (existing) existing.remove();
+  const isMissed = prizeName === "Missed";
   const modal = document.createElement("div");
   modal.className = "prize-modal";
   modal.innerHTML = `
-    <div class="prize-modal-card">
-      <span class="modal-star">★</span>
-      <h3>Congratulations!</h3>
-      <p>You won <strong>${escapeHtml(prizeName)}</strong></p>
+    <div class="prize-modal-card ${isMissed ? "prize-modal-missed" : ""}">
+      <span class="modal-star">${isMissed ? "😞" : "★"}</span>
+      <h3>${isMissed ? "Sorry!" : "Congratulations!"}</h3>
+      <p>${isMissed ? "Better luck next time!" : `You won <strong>${escapeHtml(prizeName)}</strong>`}</p>
       <button class="primary-btn" type="button">OK</button>
     </div>
   `;
@@ -2971,28 +2968,19 @@ async function spinWheel() {
   const slice = 360 / count;
 
   // The pointer is at 12 o'clock (0° / top).
-  // Segment i occupies from (i*slice - slice/2)° to ((i+1)*slice - slice/2)°
-  // Its center is at i*slice degrees.
-  // To land the pointer on segment i's center, the wheel must rotate so that
-  // angle i*slice aligns with the pointer at the top.
-  // Since the wheel rotates clockwise (positive rotation),
-  // we need: rotation_degrees where the segment at angle (i*slice) ends up at the top.
-  // segment at angle A in wheel space: after rotation R, it's at angle A+R in screen space.
-  // The pointer is at top (0°). We want A+R ≡ 0 (mod 360) → R ≡ -A (mod 360) → R ≡ 360 - A (mod 360)
-  const segmentAngle = prizeIndex * slice; // center angle of target segment
+  const segmentAngle = prizeIndex * slice;
   const targetAngle = (360 - segmentAngle + 360) % 360;
 
-  // Add small random offset within the segment (not too close to edges)
   const randomOffset = (Math.random() - 0.5) * (slice * 0.6);
   const finalTarget = (targetAngle + randomOffset + 360) % 360;
 
-  const extraRounds = 3 + Math.floor(Math.random() * 6);
+  const extraRounds = 2 + Math.floor(Math.random() * 3);
   const currentNormalized = ((wheelAngle % 360) + 360) % 360;
   const deltaToTarget = ((finalTarget - currentNormalized) + 360) % 360;
   const totalRotation = extraRounds * 360 + deltaToTarget;
 
   const start = performance.now();
-  const duration = 3000;
+  const duration = 2000;
   const initial = wheelAngle;
 
   await new Promise((resolve) => {
@@ -3007,6 +2995,10 @@ async function spinWheel() {
     requestAnimationFrame(frame);
   });
 
+  // Show prize modal immediately — don't wait for DB save
+  showPrizeModal(prizes[prizeIndex].label);
+
+  // Save prize result in background
   const surveys = await getAll("surveys");
   const survey = surveys.find((item) => item.id === currentSurveyId);
   if (survey) {
@@ -3036,7 +3028,6 @@ async function spinWheel() {
   if (wheelHint) {
     wheelHint.textContent = "Your prize has been recorded. Submit again to play more!";
   }
-  showPrizeModal(prizes[prizeIndex].label);
   currentSurveyId = null;
   isDrawActive = false;
   spinning = false;
@@ -4342,14 +4333,14 @@ if (myHistoryBtn) {
       .filter(s => s.prize && s.name === (profile ? profile.name : ""))
       .sort((a, b) => new Date(b.prizeAt) - new Date(a.prizeAt));
     if (!userWins.length) {
-      alert("No draw history yet. Submit sales to enter lucky draw!");
+      showInfoModal("My Draw History", "No draw history yet. Submit sales to enter lucky draw!");
       return;
     }
-    const lines = userWins.map(w => {
+    const rows = userWins.map(w => {
       const label = (prizes.find(p => p.name === w.prize) || {}).label || w.prize;
-      return `${new Date(w.prizeAt).toLocaleDateString()} — ${label}`;
-    }).join("\n");
-    alert("My Draw History\n\n" + lines);
+      return `<div class="info-modal-row"><span class="info-modal-date">${new Date(w.prizeAt).toLocaleDateString()}</span><span class="info-modal-prize">${escapeHtml(label)}</span></div>`;
+    }).join("");
+    showInfoModal("My Draw History", rows, true);
   });
 }
 const viewAllBtn = document.getElementById("viewAllWinnersBtn");
@@ -4360,15 +4351,36 @@ if (viewAllBtn) {
       .filter(s => s.prize)
       .sort((a, b) => new Date(b.prizeAt) - new Date(a.prizeAt));
     if (!allWins.length) {
-      alert("No winners yet. Be the first!");
+      showInfoModal("All Winners", "No winners yet. Be the first!");
       return;
     }
-    const lines = allWins.slice(0, 20).map(w => {
+    const rows = allWins.map(w => {
       const label = (prizes.find(p => p.name === w.prize) || {}).label || w.prize;
-      return `${w.name || "Anonymous"} — ${label} (${new Date(w.prizeAt).toLocaleDateString()})`;
-    }).join("\n");
-    alert("All Winners (Recent 20)\n\n" + lines);
+      return `<div class="info-modal-row"><span class="info-modal-name">${escapeHtml(w.name || "Anonymous")}</span><span class="info-modal-prize">${escapeHtml(label)}</span><span class="info-modal-date">${new Date(w.prizeAt).toLocaleDateString()}</span></div>`;
+    }).join("");
+    showInfoModal("All Winners", rows, true);
   });
+}
+
+// Reusable in-page modal for lists (My History / View All Winners)
+function showInfoModal(title, content, isHtml) {
+  const existing = document.querySelector(".info-modal-overlay");
+  if (existing) existing.remove();
+  const overlay = document.createElement("div");
+  overlay.className = "info-modal-overlay";
+  overlay.innerHTML = `
+    <div class="info-modal-card">
+      <div class="info-modal-header">
+        <h3>${escapeHtml(title)}</h3>
+        <button class="info-modal-close" type="button">&times;</button>
+      </div>
+      <div class="info-modal-body">${isHtml ? content : `<p class="info-modal-empty">${escapeHtml(content)}</p>`}</div>
+    </div>
+  `;
+  document.body.append(overlay);
+  const close = () => overlay.remove();
+  overlay.querySelector(".info-modal-close").addEventListener("click", close);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
 }
 els.exportButton.addEventListener("click", exportCsv);
 if (els.exportLearningBtn) els.exportLearningBtn.addEventListener("click", exportLearning);

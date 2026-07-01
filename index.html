@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=sticky-nav" />
+    <link rel="stylesheet" href="./styles.css?v=wheel-fixes" />
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   </head>
   <body>
@@ -306,6 +306,7 @@
                       <span>Click to upload receipt image or PDF</span>
                     </div>
                   </div>
+                  <p class="draw-receipt-warning">Do not submit duplicate receipts. Prizes won from duplicate submissions will be revoked.</p>
                 </div>
               </div>
 
@@ -417,7 +418,7 @@
                       <circle cx="12" cy="9" r="7"/><path d="M9 16l-4 5h14l-4-5"/><path d="M12 2v3"/>
                     </svg>
                   </div>
-                  <span class="macaron-card-title">Weekly Winners</span>
+                  <span class="macaron-card-title">Winners</span>
                 </div>
                 <div class="draw-winners-list-area" id="drawWeeklyWinnersList">
                   <div class="draw-winners-empty-new">
@@ -427,7 +428,7 @@
                       <path d="M30 12 L30 54" fill="none" stroke="#60A5FA" stroke-width="1.5"/>
                       <path d="M20 12 Q20 6 30 12 Q40 6 40 12" fill="none" stroke="#60A5FA" stroke-width="1.5"/>
                     </svg>
-                    <span class="draw-winners-empty-text">No winners this week yet</span>
+                    <span class="draw-winners-empty-text">No winners yet</span>
                   </div>
                 </div>
                 <button class="macaron-btn macaron-btn-purple" id="viewAllWinnersBtn" type="button">
@@ -989,7 +990,7 @@
           window.forceDemoDrawView();
         }
       </script>
-      <script src="./app.js?v=dashboards"></script>
+      <script src="./app.js?v=wheel-fixes"></script>
       <script>
         if (window.forceDemoDrawView) {
           window.setTimeout(window.forceDemoDrawView, 250);

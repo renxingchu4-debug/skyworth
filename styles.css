@@ -4377,6 +4377,15 @@ body.intro-playing {
   font-weight: 500;
 }
 
+/* Receipt duplicate warning */
+.draw-receipt-warning {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #DC2626;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 /* Submit Button */
 .draw-submit-btn {
   display: inline-flex;
@@ -4475,6 +4484,98 @@ body.intro-playing {
 .prize-modal-card button:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 24px rgba(20, 91, 215, 0.35);
+}
+
+/* Missed prize modal style */
+.prize-modal-missed h3 { color: #94a3b8; }
+.prize-modal-missed p { color: #94a3b8; }
+
+/* Info modal (My History / View All Winners) */
+.info-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(8px);
+  animation: modal-fade 0.2s ease both;
+}
+.info-modal-card {
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(520px, calc(100vh - 80px));
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+  animation: modal-pop 0.28s cubic-bezier(0.2, 1.4, 0.36, 1) both;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.info-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.info-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.info-modal-close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 18px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s;
+}
+.info-modal-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.info-modal-body {
+  padding: 16px 22px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.info-modal-empty {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+  padding: 24px 0;
+  margin: 0;
+}
+.info-modal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+}
+.info-modal-row:last-child {
+  border-bottom: 0;
+}
+.info-modal-name {
+  color: #0f172a;
+  font-weight: 600;
+}
+.info-modal-prize {
+  color: #145bd7;
+  font-weight: 600;
+}
+.info-modal-date {
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 /* Wheel locked state */
