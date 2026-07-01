@@ -3909,6 +3909,18 @@ function handleQuestionBuilderClick(event) {
 if (els.adminLoginForm) els.adminLoginForm.addEventListener("submit", handleAdminLogin);
 els.courseForm.addEventListener("submit", saveCourse);
 els.surveyForm.addEventListener("submit", saveSurvey);
+// Lucky Draw 选文件后显示预览
+const surveyReceiptInput = document.getElementById("surveyReceipt");
+if (surveyReceiptInput) {
+  surveyReceiptInput.addEventListener("change", () => {
+    const file = surveyReceiptInput.files[0];
+    const placeholder = document.querySelector(".draw-upload-placeholder");
+    if (file && placeholder) {
+      const sizeKB = (file.size / 1024).toFixed(0);
+      placeholder.innerHTML = `<span style="color:#16A34A;">✓</span> <strong>${file.name}</strong> (${sizeKB} KB)`;
+    }
+  });
+}
 els.spinButton.addEventListener("click", spinWheel);
 /* ── Side Card Button Events ── */
 const myHistoryBtn = document.getElementById("myHistoryBtn");
