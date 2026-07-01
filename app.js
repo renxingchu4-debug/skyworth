@@ -546,10 +546,25 @@ async function uploadToStorage(base64Data, fileName) {
 
 async function fileToStoredFile(file) {
   if (!file) return null;
-  // 仅接受图片类型
-  if (!file.type || !file.type.startsWith("image/")) {
-    throw new Error("Only image files are allowed.");
+  // 图片类型处理上传+压缩；PDF 等非图片文件直接存 dataUrl（不压缩）
+  if (file.type && file.type.startsWith("image/")) {
+    return await imageToStoredFile(file);
   }
+  // 非图片文件（如 PDF）：直接转 base64 上传，不做压缩
+  try {
+    const dataUrl = await blobToDataUrl(file);
+    const uploadedUrl = await uploadToStorage(dataUrl, file.name);
+    if (uploadedUrl) {
+      return { name: file.name, type: file.type || "application/octet-stream", size: file.size, url: uploadedUrl };
+    }
+    return { name: file.name, type: file.type || "application/octet-stream", size: file.size, dataUrl };
+  } catch (e) {
+    console.warn("Non-image file upload failed:", e.message);
+    return null;
+  }
+}
+
+async function imageToStoredFile(file) {
   // 前端大小校验：超过 10MB 直接拒绝
   if (file.size > 10 * 1024 * 1024) {
     throw new Error("Image is too large. Please select an image under 10 MB.");
@@ -2742,23 +2757,33 @@ async function saveSurvey(event) {
   const profile = requireProfile();
   if (!profile) return;
   const selectedModel = document.querySelector('input[name="surveyModel"]:checked');
-  const survey = {
-    id: uid("survey"),
-    userId: profile.id,
-    name: profile.name,
-    province: profile.province,
-    store: profile.store,
-    model: selectedModel ? selectedModel.value : "",
-    receipt: await fileToStoredFile($("#surveyReceipt").files[0]),
-    prize: "",
-    createdAt: new Date().toISOString()
-  };
-  await put("surveys", survey);
-  currentSurveyId = survey.id;
-  isDrawActive = true;
-  updateWheelState();
-  els.surveyForm.reset();
-  await renderAdmin();
+  try {
+    const receipt = await fileToStoredFile($("#surveyReceipt").files[0]);
+    if (!receipt) {
+      alert("Failed to upload receipt. Please try again or select a different file.");
+      return;
+    }
+    const survey = {
+      id: uid("survey"),
+      userId: profile.id,
+      name: profile.name,
+      province: profile.province,
+      store: profile.store,
+      model: selectedModel ? selectedModel.value : "",
+      receipt,
+      prize: "",
+      createdAt: new Date().toISOString()
+    };
+    await put("surveys", survey);
+    currentSurveyId = survey.id;
+    isDrawActive = true;
+    updateWheelState();
+    els.surveyForm.reset();
+    await renderAdmin();
+  } catch (e) {
+    console.error("Survey submit error:", e);
+    alert("Submit failed: " + (e.message || "Unknown error. Please try again."));
+  }
 }
 
 function renderPrizeWheel() {
