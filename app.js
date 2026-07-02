@@ -2250,6 +2250,16 @@ async function renderCourseContent(course) {
     els.courseContentTitle.textContent = course.title;
   }
 
+  // Update detail title to show course title
+  const detailTitle = document.getElementById("specializationTitle");
+  if (detailTitle) {
+    detailTitle.textContent = course.title;
+  }
+  const detailDesc = document.getElementById("specializationDescription");
+  if (detailDesc) {
+    detailDesc.textContent = "Course content and progress.";
+  }
+
   const template = $("#courseTemplate");
   let learningRecord = await getLearningRecord(currentProfile, course);
   const node = template.content.cloneNode(true);
