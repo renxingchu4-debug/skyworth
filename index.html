@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=yt3" />
+    <link rel="stylesheet" href="./styles.css?v=yt4" />
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   </head>
   <body>
@@ -83,6 +83,7 @@
       <!-- Unified top navigation bar -->
       <header class="topbar-light" id="topbarLight">
         <div class="topbar-inner">
+          <div class="topbar-brand">SKYWORTH</div>
           <nav class="topbar-nav" aria-label="Main navigation">
             <button class="topbar-nav-link is-active" data-view="learn" type="button">Learning</button>
             <button class="topbar-nav-link" data-view="survey" type="button">Lucky Draw</button>
@@ -172,11 +173,23 @@
             <div id="courseCatalogList" class="course-catalog-list empty-state">No courses yet.</div>
           </div>
           <div id="courseContentView" class="course-content-view" hidden>
-            <div class="panel-title compact-title">
-              <h4 id="courseContentTitle">Learning Content</h4>
-              <button id="backToCatalogButton" class="secondary-btn" type="button">Back to Directory</button>
+            <div class="yt-player-layout">
+              <!-- Left: Video Player -->
+              <div class="yt-player-main">
+                <div id="courseList" class="course-list"></div>
+              </div>
+              <!-- Right: Sidebar (other courses + quiz) -->
+              <div class="yt-player-sidebar">
+                <div class="yt-sidebar-section">
+                  <h4 class="yt-sidebar-title">More in this Course</h4>
+                  <div id="ytSidebarCourses" class="yt-sidebar-list"></div>
+                </div>
+                <div class="yt-sidebar-section">
+                  <h4 class="yt-sidebar-title">Quiz</h4>
+                  <div id="ytSidebarQuiz" class="yt-sidebar-quiz"></div>
+                </div>
+              </div>
             </div>
-            <div id="courseList" class="course-list"></div>
           </div>
         </section>
 
@@ -990,7 +1003,7 @@
           window.forceDemoDrawView();
         }
       </script>
-      <script src="./app.js?v=yt3"></script>
+      <script src="./app.js?v=yt4"></script>
       <script>
         if (window.forceDemoDrawView) {
           window.setTimeout(window.forceDemoDrawView, 250);

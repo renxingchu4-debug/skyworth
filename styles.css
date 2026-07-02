@@ -5300,11 +5300,21 @@ body.intro-playing {
   margin: 0 auto;
   padding: 0 clamp(20px, 4vw, 48px);
   height: 60px;
+  gap: 24px;
+}
+.topbar-brand {
+  font-size: 20px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: 1px;
+  flex-shrink: 0;
 }
 .topbar-nav {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex: 1;
+  justify-content: center;
 }
 .topbar-nav-link {
   display: inline-flex;
@@ -5374,6 +5384,288 @@ body.intro-playing {
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* ── YouTube-style Player Layout ── */
+.yt-player-layout {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px clamp(16px, 3vw, 32px);
+}
+
+.yt-player-main {
+  min-width: 0;
+}
+
+.yt-player-main .course-list {
+  margin-top: 0;
+  gap: 0;
+}
+
+.yt-player-main .course-card {
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  display: block;
+}
+
+.yt-player-main .course-media {
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.yt-player-main .course-media:has(.youtube-embed-wrapper) {
+  min-height: 0;
+}
+
+.yt-player-main .youtube-embed-wrapper iframe {
+  min-height: 0;
+}
+
+.yt-player-main .course-body {
+  padding: 16px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.yt-player-main .course-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.yt-player-main .course-head h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.yt-player-main .course-progress {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.yt-player-main .course-progress > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.yt-player-main .resource-meta {
+  display: flex;
+  gap: 8px;
+}
+
+.yt-player-main .student-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.yt-player-main .question-stack {
+  display: none;
+}
+
+/* ── Sidebar ── */
+.yt-player-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.yt-sidebar-section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.yt-sidebar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+}
+
+.yt-sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.yt-sidebar-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+  color: inherit;
+}
+
+.yt-sidebar-item:hover {
+  background: #f1f5f9;
+}
+
+.yt-sidebar-item.active {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.yt-sidebar-thumb {
+  width: 120px;
+  height: 68px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.yt-sidebar-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.yt-sidebar-thumb .yt-thumb-duration {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.yt-sidebar-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.yt-sidebar-info-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.yt-sidebar-info-meta {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.yt-sidebar-quiz {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.yt-sidebar-quiz .question-render-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  background: #f8fafc;
+}
+
+.yt-sidebar-quiz .question-render-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.yt-sidebar-quiz .question {
+  font-size: 14px;
+  color: #0f172a;
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.yt-sidebar-quiz .choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.yt-sidebar-quiz .choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.yt-sidebar-quiz .choice:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.yt-sidebar-quiz .choice input {
+  flex-shrink: 0;
+}
+
+.yt-sidebar-quiz .fill-answer-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.yt-sidebar-quiz .secondary-btn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.yt-sidebar-quiz .answer-feedback {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Responsive: stack on smaller screens */
+@media (max-width: 1100px) {
+  .yt-player-layout {
+    grid-template-columns: 1fr;
+  }
+  .yt-player-sidebar {
+    order: 2;
+  }
 }
 
 /* ── Learning Hero ── */
