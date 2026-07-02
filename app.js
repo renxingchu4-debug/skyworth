@@ -1329,7 +1329,17 @@ function parseModelFromText(text) {
   const normalized = String(text || "").replace(/\s+/g, " ").trim();
   if (!normalized) return "";
   // Match patterns like "Model: LWQ-48J001-E" or "Model:LWQ-48J001-E" or "MODEL LWQ-48J001-E"
+  // Also match standalone model-like codes (e.g., "43E5520H", "55Q6600H")
   let match = normalized.match(/model\s*[:：]?\s*([a-z0-9]+(?:-[a-z0-9]+)+)/i);
+  if (match) return match[1].toUpperCase();
+  // Match "Model:" followed by anything alphanumeric
+  match = normalized.match(/model\s*[:：]?\s*([a-z0-9]{4,}[\s]*[a-z0-9]*)/i);
+  if (match) return match[1].replace(/\s+/g, "").toUpperCase();
+  // Look for SKYWORTH TV model patterns: digit+letter+digits+letter (e.g., 43E5520H, 55Q6600H)
+  match = normalized.match(/\b(\d{2,3}[a-z]\d{4,5}[a-z]?)\b/i);
+  if (match) return match[1].toUpperCase();
+  // Broader: any alphanumeric that looks like a model code with numbers and letters
+  match = normalized.match(/\b([a-z]?\d{2,3}[a-z]\d{4,5}[a-z0-9]?)\b/i);
   if (match) return match[1].toUpperCase();
   // Fallback: match standalone model-like patterns near "Model" keyword
   match = normalized.match(/model\s*[:：]?\s*([a-z0-9]{4,})/i);
@@ -1340,11 +1350,16 @@ function parseBarcodeFromText(text) {
   const normalized = String(text || "").replace(/\s+/g, " ").trim();
   if (!normalized) return "";
   // Match barcode patterns like "DD625703-YLWY060050" - letters+digits with hyphens
-  // Also match longer alphanumeric strings that look like serial/barcode numbers
   let match = normalized.match(/\b[a-z]{2,}\d{4,}[a-z0-9]*(-[a-z0-9]+)+\b/i);
   if (match) return match[0].toUpperCase();
+  // Match patterns like "BARCODE: xxx" or "S/N: xxx" or "SN: xxx"
+  match = normalized.match(/(?:barcode|s\/?n|serial\s*no?)[\s:：]*([a-z0-9-]{6,})/i);
+  if (match) return match[1].toUpperCase();
   // Fallback: digits followed by letters and numbers with hyphens
   match = normalized.match(/\b\d{5,}[a-z0-9-]*-[a-z0-9-]+\b/i);
+  if (match) return match[0].toUpperCase();
+  // Match any alphanumeric with hyphens that looks like a serial/barcode (at least 8 chars)
+  match = normalized.match(/\b[a-z0-9]+-[a-z0-9-]{4,}\b/i);
   if (match) return match[0].toUpperCase();
   // Fallback: any alphanumeric string with at least one letter and one digit, 6+ chars
   // This ensures we reject pure-numeric barcodes (like EAN/UPC)
@@ -1429,11 +1444,15 @@ function sanitizeDetectedPair(model, barcode) {
 
 function drawImageToCanvas(imageBitmap) {
   const canvas = document.createElement("canvas");
-  const maxWidth = 2200;
-  const scale = Math.min(1, maxWidth / imageBitmap.width);
+  // Increase resolution for better OCR accuracy
+  const maxWidth = 3000;
+  const scale = Math.min(1.5, maxWidth / imageBitmap.width);
   canvas.width = Math.max(1, Math.round(imageBitmap.width * scale));
   canvas.height = Math.max(1, Math.round(imageBitmap.height * scale));
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  // Sharpen with imageSmoothing
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
   ctx.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
   return canvas;
 }
@@ -1446,9 +1465,39 @@ function enhanceLabelCanvas(sourceCanvas) {
   ctx.drawImage(sourceCanvas, 0, 0);
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const { data } = imageData;
+
+  // Adaptive threshold: use local Otsu-like binarization
+  // First compute histogram
+  const histogram = new Array(256).fill(0);
   for (let i = 0; i < data.length; i += 4) {
-    const value = Math.round(data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
-    const contrasted = value > 168 ? 255 : 0;
+    const gray = Math.round(data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+    histogram[gray]++;
+  }
+  // Find Otsu threshold
+  let total = data.length / 4;
+  let sum = 0;
+  for (let i = 0; i < 256; i++) sum += i * histogram[i];
+  let sumB = 0, wB = 0, wF = 0;
+  let maxVariance = 0, threshold = 128;
+  for (let t = 0; t < 256; t++) {
+    wB += histogram[t];
+    if (wB === 0) continue;
+    wF = total - wB;
+    if (wF === 0) break;
+    sumB += t * histogram[t];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+    const variance = wB * wF * (mB - mF) * (mB - mF);
+    if (variance > maxVariance) {
+      maxVariance = variance;
+      threshold = t;
+    }
+  }
+
+  // Apply threshold with slight blur reduction
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = Math.round(data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+    const contrasted = gray > threshold ? 255 : 0;
     data[i] = contrasted;
     data[i + 1] = contrasted;
     data[i + 2] = contrasted;
@@ -1532,17 +1581,16 @@ async function extractSalesDataFromFile(file) {
 
     let mergedText = textCandidates.join("\n");
 
-    // Fallback to Tesseract.js if native text detection returned nothing
-    if (!mergedText) {
-      const tessLines = await detectTextWithTesseract(enhancedCanvas);
-      if (tessLines.length) {
-        mergedText = tessLines.join("\n");
-        // Try base canvas too
-        const tessLines2 = await detectTextWithTesseract(baseCanvas);
-        if (tessLines2.length) {
-          mergedText = [...new Set([...tessLines, ...tessLines2])].join("\n");
-        }
+    // Always try Tesseract for better coverage — combine with native results
+    try {
+      const tessLines1 = await detectTextWithTesseract(enhancedCanvas);
+      const tessLines2 = await detectTextWithTesseract(baseCanvas);
+      const tessText = [...new Set([...tessLines1, ...tessLines2])].join("\n");
+      if (tessText) {
+        mergedText = mergedText ? [mergedText, tessText].join("\n") : tessText;
       }
+    } catch (e) {
+      console.warn("Tesseract OCR attempt failed", e);
     }
 
     const model = parseModelFromText(mergedText);
@@ -1723,13 +1771,18 @@ async function renderSalesRecords() {
     ? records.filter((item) => item.store === currentProfile.store && new Date(item.createdAt).getTime() >= weeklyStart)
     : [];
 
+  // Group by user, also capture store name
   const rankingMap = sameStoreRecords.reduce((acc, item) => {
-    acc[item.userName] = (acc[item.userName] || 0) + 1;
+    const key = item.userName;
+    if (!acc[key]) {
+      acc[key] = { count: 0, store: item.store || "" };
+    }
+    acc[key].count += 1;
     return acc;
   }, {});
 
   const rankingRows = Object.entries(rankingMap)
-    .map(([name, count]) => [name, String(count)])
+    .map(([name, data]) => [name, String(data.count), data.store])
     .sort((a, b) => Number(b[1]) - Number(a[1]) || a[0].localeCompare(b[0]));
 
   // Ranking: show empty state or list
@@ -1756,6 +1809,7 @@ async function renderSalesRecords() {
             <div class="sales-winner-rank ${rankClass(i)}">${i + 1}</div>
             <div class="sales-winner-info">
               <div class="sales-winner-name">${escapeHtml(row[0])}</div>
+              <div class="sales-winner-store">${escapeHtml(row[2])}</div>
             </div>
             <div class="sales-winner-count"><strong>${row[1]}</strong> sales</div>
           </div>
@@ -4334,8 +4388,9 @@ if (surveyReceiptInput) {
     const placeholder = document.querySelector(".draw-upload-placeholder");
     if (file && placeholder) {
       const sizeKB = (file.size / 1024).toFixed(0);
-      // Keep the same flex-column structure to prevent card size jumping
-      placeholder.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span style="color:#16A34A;font-weight:600;">${file.name}</span><span style="color:#94a3b8;font-size:12px;">${sizeKB} KB</span>`;
+      // Keep exact same flex-column structure to prevent card size jumping
+      placeholder.style.cssText = "";
+      placeholder.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span style="color:#16A34A;font-weight:600;word-break:break-all;text-align:center;max-width:100%;">${file.name}</span><span style="color:#94a3b8;font-size:12px;">${sizeKB} KB</span>`;
     }
   });
 }
@@ -4480,6 +4535,40 @@ if (els.salesCameraImage) {
     setSalesSaveStatus("", "idle");
     setSalesScanStatus(els.salesCameraImage.files[0] ? "Detecting..." : "", els.salesCameraImage.files[0] ? "progress" : "idle");
     if (els.salesCameraImage.files[0]) await scanSalesImage();
+  });
+}
+
+// Toggle manual edit for Model and Barcode fields
+const toggleManualEditBtn = document.getElementById("toggleManualEditBtn");
+if (toggleManualEditBtn) {
+  toggleManualEditBtn.addEventListener("click", () => {
+    const modelInput = els.salesModel;
+    const barcodeInput = els.salesBarcode;
+    if (!modelInput || !barcodeInput) return;
+    const isReadonly = modelInput.hasAttribute("readonly");
+    if (isReadonly) {
+      modelInput.removeAttribute("readonly");
+      barcodeInput.removeAttribute("readonly");
+      modelInput.placeholder = "Enter TV model manually...";
+      barcodeInput.placeholder = "Enter barcode number manually...";
+      modelInput.style.background = "#ffffff";
+      barcodeInput.style.background = "#ffffff";
+      modelInput.style.borderColor = "#16a34a";
+      barcodeInput.style.borderColor = "#16a34a";
+      toggleManualEditBtn.classList.add("is-active");
+      toggleManualEditBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Editing Manually`;
+    } else {
+      modelInput.setAttribute("readonly", "");
+      barcodeInput.setAttribute("readonly", "");
+      modelInput.placeholder = "Waiting for detection...";
+      barcodeInput.placeholder = "Waiting for detection...";
+      modelInput.style.background = "";
+      barcodeInput.style.background = "";
+      modelInput.style.borderColor = "";
+      barcodeInput.style.borderColor = "";
+      toggleManualEditBtn.classList.remove("is-active");
+      toggleManualEditBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Enter Manually`;
+    }
   });
 }
 
