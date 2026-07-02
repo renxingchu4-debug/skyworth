@@ -2196,6 +2196,31 @@ function renderSpecializationCards(courses, ownRecords) {
   updateContinueLearning(courses, ownRecords);
 }
 
+// Update the progress bars in the specialization cards in real-time
+async function updateSpecializationProgress(course, learningRecord) {
+  if (!course) return;
+  const specId = course.specializationId || SPECIALIZATIONS[0].id;
+  const card = document.querySelector(`.specialization-card[data-specialization="${specId}"]`);
+  if (!card) return;
+
+  const records = await getAll("learningRecords");
+  const ownRecords = records.filter((item) => item.userId === currentProfile?.id);
+  const courses = await getAll("courses");
+
+  const scopedCourses = courses.filter((c) => (c.specializationId || SPECIALIZATIONS[0].id) === specId);
+  const scopedRecords = ownRecords.filter((r) => (r.specializationId || SPECIALIZATIONS[0].id) === specId);
+  const specMeta = getSpecializationMeta(specId);
+
+  const totalVideos = scopedCourses.filter((c) => Boolean(c.video)).length + (specMeta.youtubeId ? 1 : 0);
+  const completedVideos = scopedRecords.filter((r) => r.videoCompleted).length;
+  const videoPct = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
+
+  const videoBar = card.querySelector(".learn-progress-track:nth-child(1) .learn-progress-bar-fill");
+  const videoPctText = card.querySelector(".learn-progress-track:nth-child(1) .learn-progress-pct");
+  if (videoBar) videoBar.style.width = `${videoPct}%`;
+  if (videoPctText) videoPctText.textContent = `${videoPct}%`;
+}
+
 function buildCourseDirectoryCard(course, learningRecord) {
   const hasCourseMaterial = hasMaterial(course);
   const hasCourseQuiz = getQuestionsForCourse(course).length > 0;
@@ -2235,8 +2260,6 @@ async function renderCourseContent(course) {
   const progressBar = node.querySelector(".video-progress-bar");
   const pointsEarned = node.querySelector(".points-earned");
   const questionStack = node.querySelector(".question-stack");
-  const studentName = node.querySelector(".student-name strong");
-  const openMaterial = node.querySelector(".open-material");
   const materialStatus = node.querySelector(".material-status");
   const testStatus = node.querySelector(".test-status");
   const hasCourseMaterial = hasMaterial(course);
@@ -2247,7 +2270,6 @@ async function renderCourseContent(course) {
   progressText.textContent = `${Math.round(learningRecord.videoProgress || 0)}%`;
   progressBar.value = Math.round(learningRecord.videoProgress || 0);
   pointsEarned.textContent = `${learningRecord.pointsEarned || 0} pts earned`;
-  studentName.textContent = currentProfile.name;
   materialStatus.textContent = hasCourseMaterial
     ? learningRecord.materialViewed ? "File viewed" : "File not viewed"
     : "No file";
@@ -2260,29 +2282,132 @@ async function renderCourseContent(course) {
   const youtubeId = specializationMeta.youtubeId;
 
   if (youtubeId) {
-    // Render YouTube iframe embed
+    // Render YouTube iframe embed with progress tracking
     const wrapper = document.createElement("div");
     wrapper.className = "youtube-embed-wrapper";
     const iframe = document.createElement("iframe");
-    iframe.src = `https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0&modestbranding=1`;
+    iframe.id = "youtubePlayer";
+    iframe.src = `https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0&modestbranding=1&enablejsapi=1`;
     iframe.title = course.title || "YouTube video";
     iframe.setAttribute("frameborder", "0");
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
     iframe.allowFullscreen = true;
     iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
     wrapper.append(iframe);
+    media.append(wrapper);
 
-    // YouTube completion button
-    const completeBtn = document.createElement("button");
-    completeBtn.className = "youtube-complete-btn primary-btn";
-    completeBtn.type = "button";
-    completeBtn.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="20 6 9 17 4 12"/>
-      </svg>
-      Mark as Completed
-    `;
-    completeBtn.addEventListener("click", async () => {
+    // YouTube progress tracking using postMessage API
+    let ytPlayer = null;
+    let ytTimer = null;
+    let ytLastSavedProgress = Math.round(learningRecord.videoProgress || 0);
+
+    const saveYtProgress = async () => {
+      if (!ytPlayer || !ytPlayer.getCurrentTime || !ytPlayer.getDuration) return;
+      try {
+        const currentTime = await ytPlayer.getCurrentTime();
+        const duration = await ytPlayer.getDuration();
+        if (!duration || !Number.isFinite(duration)) return;
+        const progress = Math.min(100, Math.round((currentTime / duration) * 100));
+        if (progress < ytLastSavedProgress + 3) return;
+        ytLastSavedProgress = Math.max(ytLastSavedProgress, progress);
+        const activeProfile = requireProfile();
+        if (!activeProfile) return;
+        learningRecord = await getLearningRecord(activeProfile, course);
+        learningRecord.videoProgress = Math.max(learningRecord.videoProgress || 0, ytLastSavedProgress);
+        if (learningRecord.videoProgress >= 90 && !learningRecord.videoPointsAwarded) {
+          learningRecord.videoCompleted = true;
+          learningRecord.videoProgress = 100;
+          learningRecord.videoPointsAwarded = true;
+          learningRecord.pointsEarned = (learningRecord.pointsEarned || 0) + VIDEO_COMPLETE_POINTS;
+          pointsEarned.textContent = `${learningRecord.pointsEarned || 0} pts earned`;
+        }
+        progressText.textContent = `${Math.round(learningRecord.videoProgress || 0)}%`;
+        progressBar.value = Math.round(learningRecord.videoProgress || 0);
+        await saveLearningRecord(learningRecord);
+        await updateSpecializationProgress(course, learningRecord);
+      } catch (e) {
+        // Ignore errors during progress tracking
+      }
+    };
+
+    // Load YouTube IFrame API
+    if (!window.YT || !window.YT.Player) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(tag);
+    }
+
+    const initYtPlayer = () => {
+      if (ytPlayer) return;
+      ytPlayer = new window.YT.Player("youtubePlayer", {
+        events: {
+          onReady: () => {
+            ytTimer = setInterval(saveYtProgress, 5000);
+          },
+          onStateChange: (event) => {
+            if (event.data === window.YT.PlayerState.PLAYING) {
+              if (!ytTimer) ytTimer = setInterval(saveYtProgress, 5000);
+            } else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) {
+              if (ytTimer) {
+                clearInterval(ytTimer);
+                ytTimer = null;
+              }
+              saveYtProgress();
+            }
+          }
+        }
+      });
+    };
+
+    if (window.YT && window.YT.Player) {
+      initYtPlayer();
+    } else {
+      window.onYouTubeIframeAPIReady = initYtPlayer;
+    }
+  } else if (course.video) {
+    const video = document.createElement("video");
+    video.controls = true;
+    video.src = fileUrl(course.video);
+    let lastSavedProgress = Math.round(learningRecord.videoProgress || 0);
+    let displayProgress = Math.round(learningRecord.videoProgress || 0);
+
+    // Update progress bar display in real-time
+    video.addEventListener("timeupdate", () => {
+      if (!video.duration || !Number.isFinite(video.duration)) return;
+      const progress = Math.min(100, Math.round((video.currentTime / video.duration) * 100));
+      displayProgress = Math.max(displayProgress, progress);
+      progressText.textContent = `${displayProgress}%`;
+      progressBar.value = displayProgress;
+    });
+
+    // Save progress to DB periodically (every 5 seconds of playback)
+    let saveTimer = null;
+    const scheduleSave = () => {
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(async () => {
+        if (!video.duration || !Number.isFinite(video.duration)) return;
+        const progress = Math.min(100, Math.round((video.currentTime / video.duration) * 100));
+        if (progress < lastSavedProgress + 5) return;
+        lastSavedProgress = Math.max(lastSavedProgress, progress);
+        const activeProfile = requireProfile();
+        if (!activeProfile) return;
+        learningRecord = await getLearningRecord(activeProfile, course);
+        learningRecord.videoProgress = Math.max(learningRecord.videoProgress || 0, lastSavedProgress);
+        if ((learningRecord.videoProgress >= 90) && !learningRecord.videoPointsAwarded) {
+          learningRecord.videoCompleted = true;
+          learningRecord.videoProgress = 100;
+          learningRecord.videoPointsAwarded = true;
+          learningRecord.pointsEarned = (learningRecord.pointsEarned || 0) + VIDEO_COMPLETE_POINTS;
+        }
+        pointsEarned.textContent = `${learningRecord.pointsEarned || 0} pts earned`;
+        await saveLearningRecord(learningRecord);
+        await updateSpecializationProgress(course, learningRecord);
+      }, 2000);
+    };
+
+    video.addEventListener("timeupdate", scheduleSave);
+    video.addEventListener("ended", async () => {
+      if (saveTimer) clearTimeout(saveTimer);
       const activeProfile = requireProfile();
       if (!activeProfile) return;
       learningRecord = await getLearningRecord(activeProfile, course);
@@ -2295,48 +2420,9 @@ async function renderCourseContent(course) {
         progressBar.value = 100;
         pointsEarned.textContent = `${learningRecord.pointsEarned || 0} pts earned`;
         await saveLearningRecord(learningRecord);
-        completeBtn.textContent = "Completed";
-        completeBtn.disabled = true;
-        completeBtn.style.opacity = "0.6";
+        await updateSpecializationProgress(course, learningRecord);
       }
     });
-
-    // If already completed, show completed state
-    if (learningRecord.videoCompleted) {
-      completeBtn.textContent = "Completed";
-      completeBtn.disabled = true;
-      completeBtn.style.opacity = "0.6";
-    }
-
-    wrapper.append(completeBtn);
-    media.append(wrapper);
-  } else if (course.video) {
-    const video = document.createElement("video");
-    video.controls = true;
-    video.src = fileUrl(course.video);
-    let lastSavedProgress = Math.round(learningRecord.videoProgress || 0);
-    const saveVideoProgress = async (forceComplete = false) => {
-      if (!video.duration || !Number.isFinite(video.duration)) return;
-      const progress = Math.min(100, Math.round((video.currentTime / video.duration) * 100));
-      if (!forceComplete && progress < lastSavedProgress + 5) return;
-      lastSavedProgress = Math.max(lastSavedProgress, progress);
-      const activeProfile = requireProfile();
-      if (!activeProfile) return;
-      learningRecord = await getLearningRecord(activeProfile, course);
-      learningRecord.videoProgress = Math.max(learningRecord.videoProgress || 0, lastSavedProgress);
-      if ((learningRecord.videoProgress >= 90 || forceComplete) && !learningRecord.videoPointsAwarded) {
-        learningRecord.videoCompleted = true;
-        learningRecord.videoProgress = 100;
-        learningRecord.videoPointsAwarded = true;
-        learningRecord.pointsEarned = (learningRecord.pointsEarned || 0) + VIDEO_COMPLETE_POINTS;
-      }
-      progressText.textContent = `${Math.round(learningRecord.videoProgress || 0)}%`;
-      progressBar.value = Math.round(learningRecord.videoProgress || 0);
-      pointsEarned.textContent = `${learningRecord.pointsEarned || 0} pts earned`;
-      await saveLearningRecord(learningRecord);
-    };
-    video.addEventListener("timeupdate", () => saveVideoProgress(false));
-    video.addEventListener("ended", () => saveVideoProgress(true));
     media.append(video);
   }
 
@@ -2346,22 +2432,8 @@ async function renderCourseContent(course) {
     link.download = course.material.name;
     link.textContent = `Download: ${course.material.name}`;
     material.append(link);
-    openMaterial.disabled = false;
-    openMaterial.addEventListener("click", async () => {
-      const opened = window.open(link.href, "_blank", "noopener");
-      if (!opened) link.click();
-      const activeProfile = requireProfile();
-      if (!activeProfile) return;
-      learningRecord = await getLearningRecord(activeProfile, course);
-      if (!learningRecord.materialViewed) {
-        learningRecord.materialViewed = true;
-        await saveLearningRecord(learningRecord);
-      }
-      materialStatus.textContent = "File viewed";
-    });
   } else {
     material.textContent = "No material";
-    openMaterial.disabled = true;
   }
 
   if (hasCourseQuiz) {

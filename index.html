@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=yt4" />
+    <link rel="stylesheet" href="./styles.css?v=yt5" />
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   </head>
   <body>
@@ -161,13 +161,15 @@
         <section id="specializationDetail" class="specialization-detail" hidden>
           <div class="panel-title detail-title">
             <div class="detail-head">
-              <button id="backToTracksButton" class="secondary-btn" type="button">Back to Courses</button>
-              <div>
+              <div class="detail-head-info">
                 <h3 id="specializationTitle">1. Knowing SKYWORTH</h3>
                 <p id="specializationDescription" class="detail-copy">Course directory and progress.</p>
               </div>
+              <div class="detail-head-actions">
+                <span id="specializationCount" class="status-pill">0 Items</span>
+                <button id="backToTracksButton" class="secondary-btn" type="button">Back to Courses</button>
+              </div>
             </div>
-            <span id="specializationCount" class="status-pill">0 Items</span>
           </div>
           <div id="courseCatalogView" class="course-catalog-view">
             <div id="courseCatalogList" class="course-catalog-list empty-state">No courses yet.</div>
@@ -935,13 +937,6 @@
             <span class="resource-pill test-status">No test</span>
           </div>
           <div class="question-stack"></div>
-          <div class="student-row">
-            <div class="student-name">
-              <span>Submitting as</span>
-              <strong></strong>
-            </div>
-            <button class="secondary-btn open-material" type="button">Open File</button>
-          </div>
         </div>
       </article>
     </template>
@@ -1003,7 +998,7 @@
           window.forceDemoDrawView();
         }
       </script>
-      <script src="./app.js?v=yt4"></script>
+      <script src="./app.js?v=yt5"></script>
       <script>
         if (window.forceDemoDrawView) {
           window.setTimeout(window.forceDemoDrawView, 250);

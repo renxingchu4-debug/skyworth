@@ -734,7 +734,21 @@ select:focus {
 .detail-head {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: 12px;
+  width: 100%;
+}
+
+.detail-head-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .detail-copy {
