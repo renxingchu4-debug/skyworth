@@ -9,7 +9,8 @@ const SPECIALIZATIONS = [
     id: "company",
     title: "1. Knowing SKYWORTH",
     description: "Brand and company basics.",
-    cover: "./course-cover-1-knowing-skyworth.png"
+    cover: "./course-cover-1-knowing-skyworth.png",
+    youtubeId: "qN4GeE0J6xQ"
   },
   {
     id: "tv-basics",
@@ -2142,7 +2143,7 @@ function renderSpecializationCards(courses, ownRecords) {
   els.specializationGrid.innerHTML = SPECIALIZATIONS.map((specialization) => {
     const scopedCourses = courses.filter((course) => (course.specializationId || SPECIALIZATIONS[0].id) === specialization.id);
     const scopedRecords = ownRecords.filter((record) => (record.specializationId || SPECIALIZATIONS[0].id) === specialization.id);
-    const totalVideos = scopedCourses.filter((course) => Boolean(course.video)).length;
+    const totalVideos = scopedCourses.filter((course) => Boolean(course.video)).length + (specialization.youtubeId ? 1 : 0);
     const totalFiles = scopedCourses.filter((course) => hasMaterial(course)).length;
     const totalTests = scopedCourses.filter((course) => hasQuiz(course)).length;
     const completedVideos = scopedRecords.filter((record) => record.videoCompleted).length;
@@ -2198,6 +2199,9 @@ function renderSpecializationCards(courses, ownRecords) {
 function buildCourseDirectoryCard(course, learningRecord) {
   const hasCourseMaterial = hasMaterial(course);
   const hasCourseQuiz = getQuestionsForCourse(course).length > 0;
+  const specMeta = getSpecializationMeta(course.specializationId || SPECIALIZATIONS[0].id);
+  const hasVideo = Boolean(course.video) || Boolean(specMeta.youtubeId);
+  const hasVideoCount = hasVideo ? 1 : 0;
   return `
     <button class="course-directory-card" type="button" data-course-id="${course.id}">
       <div class="course-directory-head">
@@ -2205,7 +2209,7 @@ function buildCourseDirectoryCard(course, learningRecord) {
         <span class="status-pill">Open Content</span>
       </div>
       <div class="course-directory-progress">
-        <span>Video (${learningRecord.videoCompleted ? 1 : 0}/${course.video ? 1 : 0})</span>
+        <span>Video (${learningRecord.videoCompleted ? 1 : 0}/${hasVideoCount})</span>
         <span>File (${learningRecord.materialViewed ? 1 : 0}/${hasCourseMaterial ? 1 : 0})</span>
         <span>Test (${learningRecord.quizCompleted ? 1 : 0}/${hasCourseQuiz ? 1 : 0})</span>
       </div>
@@ -2251,7 +2255,62 @@ async function renderCourseContent(course) {
     ? learningRecord.quizCompleted ? "Test completed" : "Test pending"
     : "No test";
 
-  if (course.video) {
+  // Check if specialization has a YouTube video
+  const specializationMeta = getSpecializationMeta(course.specializationId || SPECIALIZATIONS[0].id);
+  const youtubeId = specializationMeta.youtubeId;
+
+  if (youtubeId) {
+    // Render YouTube iframe embed
+    const wrapper = document.createElement("div");
+    wrapper.className = "youtube-embed-wrapper";
+    const iframe = document.createElement("iframe");
+    iframe.src = `https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0&modestbranding=1`;
+    iframe.title = course.title || "YouTube video";
+    iframe.setAttribute("frameborder", "0");
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    iframe.allowFullscreen = true;
+    iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+    wrapper.append(iframe);
+
+    // YouTube completion button
+    const completeBtn = document.createElement("button");
+    completeBtn.className = "youtube-complete-btn primary-btn";
+    completeBtn.type = "button";
+    completeBtn.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      Mark as Completed
+    `;
+    completeBtn.addEventListener("click", async () => {
+      const activeProfile = requireProfile();
+      if (!activeProfile) return;
+      learningRecord = await getLearningRecord(activeProfile, course);
+      if (!learningRecord.videoPointsAwarded) {
+        learningRecord.videoCompleted = true;
+        learningRecord.videoProgress = 100;
+        learningRecord.videoPointsAwarded = true;
+        learningRecord.pointsEarned = (learningRecord.pointsEarned || 0) + VIDEO_COMPLETE_POINTS;
+        progressText.textContent = "100%";
+        progressBar.value = 100;
+        pointsEarned.textContent = `${learningRecord.pointsEarned || 0} pts earned`;
+        await saveLearningRecord(learningRecord);
+        completeBtn.textContent = "Completed";
+        completeBtn.disabled = true;
+        completeBtn.style.opacity = "0.6";
+      }
+    });
+
+    // If already completed, show completed state
+    if (learningRecord.videoCompleted) {
+      completeBtn.textContent = "Completed";
+      completeBtn.disabled = true;
+      completeBtn.style.opacity = "0.6";
+    }
+
+    wrapper.append(completeBtn);
+    media.append(wrapper);
+  } else if (course.video) {
     const video = document.createElement("video");
     video.controls = true;
     video.src = fileUrl(course.video);
@@ -2689,10 +2748,10 @@ async function renderCourses() {
   els.specializationDescription.textContent = selectedSpecialization.description;
   els.specializationCount.textContent = `${specializationCourses.length} ${specializationCourses.length === 1 ? "Item" : "Items"}`;
   if (els.courseCatalogList) {
-    els.courseCatalogList.className = specializationCourses.length === 0 ? "course-catalog-list empty-state" : "course-catalog-list";
+    els.courseCatalogList.className = specializationCourses.length === 0 && !selectedSpecialization.youtubeId ? "course-catalog-list empty-state" : "course-catalog-list";
   }
 
-  if (!specializationCourses.length) {
+  if (!specializationCourses.length && !selectedSpecialization.youtubeId) {
     if (els.courseCatalogList) {
       els.courseCatalogList.textContent = "No courses yet.";
     }
@@ -2701,8 +2760,13 @@ async function renderCourses() {
     return;
   }
 
+  // If specialization has a YouTube video but no courses, create a virtual course entry
+  const displayCourses = specializationCourses.length > 0
+    ? specializationCourses
+    : [{ id: `${selectedSpecialization.id}__youtube`, title: selectedSpecialization.title, specializationId: selectedSpecialization.id, video: null, material: null, questions: [] }];
+
   const directoryCards = [];
-  for (const course of specializationCourses) {
+  for (const course of displayCourses) {
     const learningRecord = await getLearningRecord(currentProfile, course);
     directoryCards.push(buildCourseDirectoryCard(course, learningRecord));
   }
@@ -2713,7 +2777,7 @@ async function renderCourses() {
       button.addEventListener("click", async () => {
         activeCourseId = button.dataset.courseId;
         toggleCourseContentView(true);
-        const selectedCourse = specializationCourses.find((course) => course.id === activeCourseId);
+        const selectedCourse = displayCourses.find((course) => course.id === activeCourseId);
         await renderCourseContent(selectedCourse);
       });
     });
@@ -2724,7 +2788,7 @@ async function renderCourses() {
     return;
   }
 
-  const selectedCourse = specializationCourses.find((course) => course.id === activeCourseId);
+  const selectedCourse = displayCourses.find((course) => course.id === activeCourseId);
   if (!selectedCourse) {
     activeCourseId = "";
     toggleCourseContentView(false);
