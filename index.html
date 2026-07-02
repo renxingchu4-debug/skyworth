@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=blue-topbar" />
+    <link rel="stylesheet" href="./styles.css?v=light-nav" />
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   </head>
   <body>
@@ -325,25 +325,31 @@
 
           <!-- ─── Three-column Layout ─── -->
           <div class="draw-three-col">
-            <!-- Left Card: Available Chances -->
+            <!-- Left Card: Weekly's Winners -->
             <aside class="draw-side-card-new macaron-card">
               <div class="draw-side-card-inner-new">
                 <div class="draw-card-header-area">
-                  <div class="macaron-card-icon macaron-icon-pink">
+                  <div class="macaron-card-icon macaron-icon-purple">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/><path d="M6 3h12v6a6 6 0 0 1-12 0V3z"/><path d="M9 21h6"/><path d="M12 15v6"/>
+                      <circle cx="12" cy="9" r="7"/><path d="M9 16l-4 5h14l-4-5"/><path d="M12 2v3"/>
                     </svg>
                   </div>
-                  <span class="macaron-card-title">Available Chances</span>
+                  <span class="macaron-card-title">Winners</span>
                 </div>
-                <div class="draw-big-number-wrap">
-                  <div class="macaron-number-bg"></div>
-                  <span class="draw-big-number" id="drawChancesCount">0</span>
+                <div class="draw-winners-list-area" id="drawWeeklyWinnersList">
+                  <div class="draw-winners-empty-new">
+                    <svg width="60" height="60" viewBox="0 0 60 60">
+                      <rect x="10" y="22" width="40" height="32" rx="6" fill="#EFF6FF" stroke="#60A5FA" stroke-width="1.5"/>
+                      <path d="M10 22 L30 12 L50 22" fill="none" stroke="#60A5FA" stroke-width="1.5"/>
+                      <path d="M30 12 L30 54" fill="none" stroke="#60A5FA" stroke-width="1.5"/>
+                      <path d="M20 12 Q20 6 30 12 Q40 6 40 12" fill="none" stroke="#60A5FA" stroke-width="1.5"/>
+                    </svg>
+                    <span class="draw-winners-empty-text">No winners yet</span>
+                  </div>
                 </div>
-                <span class="macaron-card-sub">Chances Left</span>
-                <button class="macaron-btn macaron-btn-pink" id="myHistoryBtn" type="button">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/><path d="M3 10h18"/></svg>
-                  My History
+                <button class="macaron-btn macaron-btn-purple" id="viewAllWinnersBtn" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="6" height="14" rx="1"/><rect x="9" y="10" width="6" height="10" rx="1"/><rect x="16" y="2" width="6" height="18" rx="1"/></svg>
+                  View All Winners
                 </button>
               </div>
             </aside>
@@ -409,31 +415,25 @@
               </div>
             </section>
 
-            <!-- Right Card: Weekly's Winners -->
+            <!-- Right Card: Available Chances -->
             <aside class="draw-side-card-new macaron-card">
               <div class="draw-side-card-inner-new">
                 <div class="draw-card-header-area">
-                  <div class="macaron-card-icon macaron-icon-purple">
+                  <div class="macaron-card-icon macaron-icon-pink">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="9" r="7"/><path d="M9 16l-4 5h14l-4-5"/><path d="M12 2v3"/>
+                      <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/><path d="M6 3h12v6a6 6 0 0 1-12 0V3z"/><path d="M9 21h6"/><path d="M12 15v6"/>
                     </svg>
                   </div>
-                  <span class="macaron-card-title">Winners</span>
+                  <span class="macaron-card-title">Available Chances</span>
                 </div>
-                <div class="draw-winners-list-area" id="drawWeeklyWinnersList">
-                  <div class="draw-winners-empty-new">
-                    <svg width="60" height="60" viewBox="0 0 60 60">
-                      <rect x="10" y="22" width="40" height="32" rx="6" fill="#EFF6FF" stroke="#60A5FA" stroke-width="1.5"/>
-                      <path d="M10 22 L30 12 L50 22" fill="none" stroke="#60A5FA" stroke-width="1.5"/>
-                      <path d="M30 12 L30 54" fill="none" stroke="#60A5FA" stroke-width="1.5"/>
-                      <path d="M20 12 Q20 6 30 12 Q40 6 40 12" fill="none" stroke="#60A5FA" stroke-width="1.5"/>
-                    </svg>
-                    <span class="draw-winners-empty-text">No winners yet</span>
-                  </div>
+                <div class="draw-big-number-wrap">
+                  <div class="macaron-number-bg"></div>
+                  <span class="draw-big-number" id="drawChancesCount">0</span>
                 </div>
-                <button class="macaron-btn macaron-btn-purple" id="viewAllWinnersBtn" type="button">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="6" height="14" rx="1"/><rect x="9" y="10" width="6" height="10" rx="1"/><rect x="16" y="2" width="6" height="18" rx="1"/></svg>
-                  View All Winners
+                <span class="macaron-card-sub">Chances Left</span>
+                <button class="macaron-btn macaron-btn-pink" id="myHistoryBtn" type="button">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/><path d="M3 10h18"/></svg>
+                  My History
                 </button>
               </div>
             </aside>
@@ -990,7 +990,7 @@
           window.forceDemoDrawView();
         }
       </script>
-      <script src="./app.js?v=blue-topbar"></script>
+      <script src="./app.js?v=light-nav"></script>
       <script>
         if (window.forceDemoDrawView) {
           window.setTimeout(window.forceDemoDrawView, 250);

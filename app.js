@@ -2623,7 +2623,44 @@ async function renderCourses() {
   if (els.courseCount) els.courseCount.textContent = `${SPECIALIZATIONS.length} Tracks`;
   els.courseList.innerHTML = "";
   if (els.courseCatalogList) els.courseCatalogList.innerHTML = "";
-  els.specializationGrid.innerHTML = "";
+
+  // Show specialization cards immediately with skeleton state (0% progress)
+  // so the Categories section appears instantly without waiting for DB queries
+  if (!els.specializationGrid.querySelector(".specialization-card")) {
+    renderSpecializationCards([], []);
+  }
+
+  // Populate category filter dropdown with all course categories
+  const categoryFilter = document.getElementById("categoryFilter");
+  if (categoryFilter && categoryFilter.options.length <= 1) {
+    const selectedValue = categoryFilter.value;
+    categoryFilter.innerHTML = '<option value="all">All Courses</option>';
+    SPECIALIZATIONS.forEach(spec => {
+      const option = document.createElement("option");
+      option.value = spec.id;
+      option.textContent = spec.title;
+      categoryFilter.appendChild(option);
+    });
+    categoryFilter.value = selectedValue;
+  }
+
+  // Filter change handler — re-render specialization cards
+  if (categoryFilter && !categoryFilter._listenerAttached) {
+    categoryFilter._listenerAttached = true;
+    categoryFilter.addEventListener("change", async () => {
+      const filterVal = categoryFilter.value;
+      const allCards = document.querySelectorAll("#learn .specialization-card");
+      allCards.forEach(card => {
+        if (filterVal === "all" || card.dataset.specialization === filterVal) {
+          card.style.display = "";
+        } else {
+          card.style.display = "none";
+        }
+      });
+      // Update carousel arrows after filtering
+      updateCarouselArrows();
+    });
+  }
 
   if (!currentProfile) {
     renderSpecializationCards([], []);
@@ -2906,7 +2943,7 @@ function updateWheelState() {
     spinBtn.disabled = false;
     spinBtn.textContent = "SPIN";
     if (hubText) hubText.textContent = "SPIN";
-    if (wheelHint) wheelHint.innerHTML = '<span style="color:#16A34A;">🎉</span> Good luck! Spin the wheel to win rewards.';
+    if (wheelHint) wheelHint.innerHTML = '<span style="color:#2563EB;">🎉</span> Good luck! Spin the wheel to win rewards.';
     if (drawStatusText) drawStatusText.textContent = "Unlocked";
     if (wheelSegments) wheelSegments.style.filter = "none";
     // Scale animation on unlock
